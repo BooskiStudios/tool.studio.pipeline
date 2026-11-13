@@ -15,6 +15,24 @@ npm run preview # serve dist/ locally
 
 `package-lock.json` is committed so every install resolves the same dependency versions. Use `npm ci` for clean installs; use `npm install <pkg>` only when deliberately adding or upgrading a dependency, and commit the updated lockfile.
 
+## Backend (Booski Core)
+
+The API lives in [backend/](backend/README.md) (FastAPI + PostgreSQL 18). It is not connected to the frontend yet; that happens in PR 2.6. Quick start on Windows, with no Docker needed:
+
+```powershell
+cd backend
+uv sync
+uv run booski devdb setup    # private PostgreSQL 18 in backend/var, writes backend/.env
+uv run booski db upgrade
+uv run booski serve --reload # http://127.0.0.1:8000/api/v1/health/ready
+```
+
+`docker-compose.yml` runs the same API in containers for anyone with Docker and is the basis for future server or cloud hosting.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push: the frontend build; backend lint (ruff), types (mypy strict) and tests against a real PostgreSQL 18; and a container smoke test that builds the image, starts the Compose stack and waits for `/api/v1/health/ready`.
+
 ## Project structure
 
 ```
@@ -102,4 +120,4 @@ Today `studioApi` is `demoStudioApi`, which resolves the bundled demo data. To c
 - Reference Vault moved into project workspaces; department tabs redesigned per department.
 
 ## Next milestone
-Build the FastAPI + SQLite Booski Core and add a live `StudioApi` implementation.
+Booski Core PR 2.2: identity, workspaces, sessions and role-based permissions. A live `StudioApi` implementation follows in PR 2.6.
