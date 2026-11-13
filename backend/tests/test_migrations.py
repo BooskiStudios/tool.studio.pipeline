@@ -5,7 +5,7 @@ from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine
+from sqlalchemy import Engine, inspect, text
 
 from booski_core.config import Settings
 from booski_core.main import create_app
@@ -45,6 +45,38 @@ def test_downgrade_to_base_and_upgrade_again(empty_database: Engine, test_databa
     assert database_revisions(empty_database) == set()
     command.upgrade(config, "head")
     assert database_revisions(empty_database) == migration_heads()
+
+
+IDENTITY_TABLES = {
+    "users",
+    "sessions",
+    "login_attempts",
+    "workspaces",
+    "workspace_memberships",
+    "invitations",
+    "activity_events",
+}
+
+
+def _tables(engine: Engine) -> set[str]:
+    return set(inspect(engine).get_table_names()) - {"alembic_version"}
+
+
+def test_identity_migration_rolls_back_cleanly(empty_database: Engine, test_database_url: str) -> None:
+    config = alembic_config(test_database_url)
+    command.upgrade(config, "head")
+    assert _tables(empty_database) >= IDENTITY_TABLES
+
+    command.downgrade(config, "0001")
+    assert _tables(empty_database) == set()
+    with empty_database.connect() as connection:
+        leftover = connection.scalar(
+            text("SELECT count(*) FROM pg_proc WHERE proname = 'activity_events_reject_change'")
+        )
+    assert leftover == 0
+
+    command.upgrade(config, "head")
+    assert _tables(empty_database) >= IDENTITY_TABLES
 
 
 def test_models_and_migrations_agree(empty_database: Engine, test_database_url: str) -> None:

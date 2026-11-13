@@ -1,9 +1,10 @@
-"""The ``booski`` command: run the API and manage the database schema.
+"""The ``booski`` command: run the API, manage the database schema and provision accounts.
 
-Later phases add ``create-owner``, ``seed-demo``, ``backup`` and ``restore-check`` here.
+Later phases add ``seed-demo``, ``backup`` and ``restore-check`` here.
 """
 
 import argparse
+import getpass
 import ipaddress
 import logging
 import sys
@@ -62,7 +63,52 @@ def _db(args: argparse.Namespace) -> int:
     elif args.db_command == "history":
         command.history(config)
     elif args.db_command == "revision":
-        command.revision(config, message=args.message, autogenerate=True)
+        command.revision(config, message=args.message, autogenerate=True, rev_id=args.rev_id)
+    return 0
+
+
+def _read_password(args: argparse.Namespace) -> str:
+    """From stdin with --password-stdin (automation), else a hidden prompt typed twice. Never from argv."""
+    if args.password_stdin:
+        return sys.stdin.readline().rstrip("\r\n")
+    first = getpass.getpass("Password (at least 12 characters): ")
+    if getpass.getpass("Repeat password: ") != first:
+        raise ValueError("The passwords don't match.")
+    return first
+
+
+def _accounts(args: argparse.Namespace) -> int:
+    from sqlalchemy.orm import Session
+
+    from booski_core import provisioning
+    from booski_core.db import create_db_engine
+
+    engine = create_db_engine(get_settings())
+    try:
+        with Session(engine) as db:
+            if args.command == "create-owner":
+                created = provisioning.create_owner(
+                    db,
+                    email=args.email,
+                    display_name=args.name,
+                    password=_read_password(args),
+                    workspace_name=args.workspace_name,
+                    workspace_slug=args.workspace_slug,
+                )
+                print(f"Created {args.email} as owner of workspace '{created.workspace_slug}'.")
+            elif args.command == "set-password":
+                revoked = provisioning.set_password(db, email=args.email, password=_read_password(args))
+                print(f"Password updated for {args.email}. Signed out {revoked} session(s).")
+            elif args.command in ("deactivate-user", "activate-user"):
+                active = args.command == "activate-user"
+                revoked = provisioning.set_active(db, email=args.email, active=active)
+                state = "reactivated" if active else f"deactivated and signed out of {revoked} session(s)"
+                print(f"{args.email} {state}.")
+    except (provisioning.ProvisioningError, ValueError) as error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 1
+    finally:
+        engine.dispose()
     return 0
 
 
@@ -112,7 +158,34 @@ def build_parser() -> argparse.ArgumentParser:
     db_commands.add_parser("history", help="List all migrations.")
     revision = db_commands.add_parser("revision", help="Generate a new migration from model changes.")
     revision.add_argument("-m", "--message", required=True)
+    revision.add_argument("--rev-id", help="Readable revision id, e.g. 0003 (default: random).")
     db.set_defaults(handler=_db)
+
+    stdin_help = "Read the password from the first line of stdin instead of prompting."
+    create_owner = commands.add_parser(
+        "create-owner", help="Create the first owner account and their workspace (prompts for a password)."
+    )
+    create_owner.add_argument("--email", required=True)
+    create_owner.add_argument("--name", required=True, help="Display name.")
+    create_owner.add_argument("--workspace-name", required=True)
+    create_owner.add_argument(
+        "--workspace-slug", required=True, help="Workspace address, e.g. booski-studios."
+    )
+    create_owner.add_argument("--password-stdin", action="store_true", help=stdin_help)
+    create_owner.set_defaults(handler=_accounts)
+
+    set_password = commands.add_parser("set-password", help="Reset a user's password and sign them out.")
+    set_password.add_argument("--email", required=True)
+    set_password.add_argument("--password-stdin", action="store_true", help=stdin_help)
+    set_password.set_defaults(handler=_accounts)
+
+    for name, text in (
+        ("deactivate-user", "Block a user from signing in and end their sessions."),
+        ("activate-user", "Allow a deactivated user to sign in again."),
+    ):
+        account = commands.add_parser(name, help=text)
+        account.add_argument("--email", required=True)
+        account.set_defaults(handler=_accounts)
 
     devdb_parser = commands.add_parser("devdb", help="Run a private PostgreSQL 18 for local development.")
     devdb_commands = devdb_parser.add_subparsers(dest="devdb_command", required=True)

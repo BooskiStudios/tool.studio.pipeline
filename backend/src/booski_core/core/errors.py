@@ -14,6 +14,22 @@ PROBLEM_JSON = "application/problem+json"
 logger = logging.getLogger("booski_core.errors")
 
 
+class ProblemError(Exception):
+    """Raise from services and dependencies to return a problem+json response.
+
+    ``detail`` is shown to the caller, so it must explain the problem without revealing internals.
+    """
+
+    def __init__(
+        self, status: int, detail: str | None = None, *, headers: dict[str, str] | None = None, **extra: Any
+    ) -> None:
+        super().__init__(detail or HTTPStatus(status).phrase)
+        self.status = status
+        self.detail = detail
+        self.headers = headers
+        self.extra = extra
+
+
 def problem_response(
     request: Request,
     status: int,
@@ -54,6 +70,12 @@ async def _validation_exception_handler(request: Request, exc: Exception) -> JSO
     return problem_response(request, 422, detail="The request is invalid.", errors=errors)
 
 
+async def _problem_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    if not isinstance(exc, ProblemError):  # registered for this type only
+        raise exc
+    return problem_response(request, exc.status, detail=exc.detail, headers=exc.headers, **exc.extra)
+
+
 async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception(
         "Unhandled error (request_id=%s)", getattr(request.state, "request_id", "-"), exc_info=exc
@@ -64,6 +86,7 @@ async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSON
 
 
 def install_error_handlers(app: FastAPI) -> None:
+    app.add_exception_handler(ProblemError, _problem_error_handler)
     app.add_exception_handler(StarletteHTTPException, _http_exception_handler)
     app.add_exception_handler(RequestValidationError, _validation_exception_handler)
     app.add_exception_handler(Exception, _unhandled_exception_handler)
