@@ -137,3 +137,15 @@ button,.panel,.department-card,.game-library-card,.agent-node{transition:backgro
 .chart-wrap{height:230px;width:100%;margin-top:5px;}
 .budget-controls{margin-top:12px;}
 @media(max-width:850px){.sidebar{height:100vh;}.sidebar-scroll{padding-right:0;}.profile{margin-top:10px;}}
+
+/* v0.8: routing, accessibility and empty/loading states (PR1 frontend foundations) */
+/* Sidebar entries are now links; keep them looking exactly like the previous buttons. */
+a{color:inherit;text-decoration:none}
+.modal>form>input{width:100%;background:#061522;border:1px solid #2a4c65;border-radius:8px;padding:11px;color:white;outline:0;margin:8px 0}
+.modal:focus{outline:none}
+.agent-node:focus-visible{border-color:#d7ff43;box-shadow:0 0 0 2px #d7ff43,0 8px 22px #0009;outline:none}
+.agent-canvas.is-dragging .agent-node{cursor:grabbing}
+.decision-embedded .decision-toolbar{padding-top:0}
+.decision-embedded .decision-row:last-child{border:0}
+.resource-state{min-height:120px;display:grid;place-items:center;color:#8ea6ba;font-size:10px;letter-spacing:.4px}
+.resource-error{color:#ff9ebc}
