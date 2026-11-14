@@ -22,7 +22,7 @@ A planned or proposed item is **never** an approved task. Only the human moves a
 |---|---|---|
 | 1 | Frontend prototype | **Complete** |
 | 2 | Platform foundations (PR1, PR2.1–PR2.4) | **Complete** |
-| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: only PR3.0 is approved and current. PR3.1–PR3.8 are planned and not authorised. |
+| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0 is complete. No milestone is currently approved; PR3.1–PR3.8 are planned and not authorised. |
 | 4 | Game Development Intelligence | Planned (strategic) |
 | 5 | Concept Lab & Asset Production | Planned (strategic) |
 | 6 | Marketing Studio & Studio Operations | Planned (strategic) |
@@ -59,7 +59,7 @@ The original Phase 2 plan described PR2.1–PR2.6, but Phase 2 was delivered as 
 
 **Goal:** build the shared AI infrastructure: providers, memory, agents, tools, the Local Worker and Claude Code execution. Bring it into the existing interface.
 
-> **Phase 3 being "in progress" authorises only PR3.0.** It does **not** authorise work on PR3.1 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
+> **Phase 3 being "in progress" authorised only PR3.0, which is now complete.** It does **not** authorise work on PR3.1 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 
 **Dependencies:** each milestone builds on the ones before it. The diagram shows the proposed dependency order, implied by the agreed numbering. Confirm a milestone's exact dependencies when it is planned.
 
@@ -71,7 +71,7 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
 
 > **Acceptance criteria for PR3.1–PR3.8 are *proposed*.** They are derived from each milestone's agreed capability list. Confirm and refine them with the human when the milestone is planned, before it moves to *In progress*.
 
-### PR3.0 — Booski Blueprint & Project Documentation · Awaiting review
+### PR3.0 — Booski Blueprint & Project Documentation · Complete
 - **Purpose:** make the repository the permanent source of truth, so a fresh Claude Code session understands the product, the plan and the state.
 - **Scope:** `CLAUDE.md`; `docs/BOOSKI_VISION.md`, `ROADMAP.md`, `ARCHITECTURE.md`, `CURRENT_STATUS.md`, `DECISIONS.md`; README links. **Documentation only.**
 - **Out of scope:** any application, schema or behaviour change; the CCGS audit (PR3.1); housekeeping (PROP-1, PROP-2).
@@ -84,6 +84,7 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
   5. No duplicated or conflicting sources of truth.
   6. No application behaviour changed; Git changes cleanly scoped.
 - **Branch:** `phase-3/pr3.0-booski-blueprint`.
+- **Delivered:** commit `abafcd6`; merged on 14 November 2026 through PR #6 with a merge commit, `65755f1` (D24). CI: PR runs 43626305259 and 43626320236 ✅; `main` run 43626588068 ✅. Status marked Complete in a follow-up docs-only PR (`phase-3/pr3.0-status-complete`).
 
 ### PR3.1 — Open-Source Capability Adoption Audit · Planned
 - **Purpose:** decide what Booski should **reuse, adapt, rebuild or ignore** from [`donchitos/claude-code-game-studios`](https://github.com/donchitos/claude-code-game-studios) (MIT).
