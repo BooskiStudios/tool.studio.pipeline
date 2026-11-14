@@ -46,6 +46,7 @@
 | D27 | Toolkit target: Booski agent configurations (Route A) | Explicitly approved decision (accepts PROP-3) | Agreed; not built |
 | D28 | Acknowledge CCGS when CCGS-inspired features are built | Explicitly approved decision (resolves PROP-4) | Agreed; not yet due |
 | D29 | Unity 6.3 LTS is the studio's Unity version; upgrades expected | Explicitly approved decision | Agreed |
+| D30 | PR3.1 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.1 only) | Completed |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -327,6 +328,13 @@ These entries cover what happened after the plan was approved. Each is classifie
   - Treat the Unity version as a **per-project setting**, not a studio-wide constant, so a project can be upgraded deliberately and independently.
   - Any Unity reference material or agent guidance is scoped to the version a project uses; an upgrade is a tracked change with its own review.
   - Agents check the project's pinned version before using an engine API, and mark anything unverified.
+
+### D30 — How PR3.1 was merged
+- **Category:** explicitly approved decision, **for PR3.1 only**.
+- **Date:** 14 November 2026.
+- **Evidence:** Claude asked for approval to commit, push, open the PR, merge with a merge commit (as for PR3.0) and mark PR3.1 Complete in a follow-up PR; the human replied "Lets do it!".
+- **Decision:** PR #8 was merged into `main` with a **merge commit** (`f782107`) after its CI passed; marking PR3.1 Complete was done in a separate docs-only PR.
+- **Scope:** PR3.1 and its follow-up status PR only. Like D22 and D24, it is **not** a standing rule: each future merge strategy needs the human's approval.
 
 ---
 
