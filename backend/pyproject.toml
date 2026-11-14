@@ -1,0 +1,66 @@
+[project]
+name = "booski-core"
+version = "0.1.0"
+description = "Booski Core: the control-plane API for the Booski Studios operating system."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "alembic>=1.16",
+    "fastapi>=0.115",
+    "psycopg[binary]>=3.2",
+    "pydantic>=2.11",
+    "pydantic-settings>=2.9",
+    "sqlalchemy>=2.0.40",
+    "uvicorn[standard]>=0.34",
+]
+
+[project.scripts]
+booski = "booski_core.cli:main"
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16",
+    "mypy>=1.16",
+    "pytest>=8.4",
+    "ruff>=0.12",
+]
+
+[build-system]
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv]
+# Supply-chain guard: only resolve package versions published before this date
+# (at least two weeks old when last bumped). Move it forward deliberately when upgrading.
+exclude-newer = "2026-10-30T00:00:00Z"
+required-version = ">=0.13"
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "S", "SIM", "RUF", "PTH", "N"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]  # asserts and dummy credentials are fine in tests
+"src/booski_core/migrations/versions/**" = ["N999"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["booski_core.migrations.*"]
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "db: needs a real PostgreSQL database (set BOOSKI_TEST_DATABASE_URL)",
+]

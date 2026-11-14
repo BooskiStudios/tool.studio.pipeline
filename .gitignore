@@ -1,3 +1,13 @@
 node_modules
 dist
 *.tsbuildinfo
+
+# Backend (Python)
+.env
+backend/.venv/
+backend/var/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
