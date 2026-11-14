@@ -2,7 +2,7 @@
 
 The control-plane API for the Booski Studios operating system: FastAPI, SQLAlchemy 2, Alembic and PostgreSQL 18.
 
-**Status: PR 2.3 (studio platform).** Accounts and roles (PR 2.2) plus the studio's persistent data: departments, projects, workstreams, milestones, tasks with comments, the knowledge base, the Decision Log, the Approvals Centre and the activity feed. The API still listens only on this machine (`127.0.0.1`): opening it to a network also needs HTTPS and a reviewed deployment, which come in a later PR. The frontend is connected in PR 2.4.
+**Status: PR 2.4 (frontend integration and production readiness).** Accounts and roles, the studio's persistent data (departments, projects, workstreams, milestones, tasks with comments, the knowledge base, the Decision Log, the Approvals Centre and the activity feed), connected to the React app. Security headers, serving the built web app, backups and production configuration checks are in place. The API still listens only on this machine (`127.0.0.1`): see [DEPLOYMENT.md](DEPLOYMENT.md) for what must be in place before any external access.
 
 ## Accounts and sign-in
 
@@ -97,6 +97,7 @@ API docs (development only): http://127.0.0.1:8000/api/docs
 | `uv run booski db downgrade -1` | Revert the last migration. |
 | `uv run pytest` | Run the tests (database tests use the `booski_test` database). |
 | `uv run ruff check . && uv run ruff format --check . && uv run mypy` | Lint, format check and type check (CI runs the same). |
+| `uv run booski backup create` / `verify <file>` / `restore <file> --target-database <name>` | Back up with `pg_dump`, prove a backup restores, restore into an empty database. See [DEPLOYMENT.md](DEPLOYMENT.md#6-backups-and-restoring). |
 
 ## The local database
 
@@ -120,11 +121,14 @@ Settings are environment variables with the `BOOSKI_` prefix, read from `backend
 | `BOOSKI_SESSION_IDLE_MINUTES` / `BOOSKI_SESSION_ABSOLUTE_DAYS` | `720` / `30` | Sign out after 12 h idle; sessions never last more than 30 days. |
 | `BOOSKI_LOGIN_MAX_FAILURES_PER_EMAIL` / `…_PER_IP` / `BOOSKI_LOGIN_WINDOW_MINUTES` | `5` / `20` / `15` | Sign-in throttling. |
 | `BOOSKI_INVITATION_TTL_HOURS` | `72` | How long an invitation stays valid. |
-| `BOOSKI_ALLOWED_ORIGINS` | Vite and API on 127.0.0.1/localhost | JSON list of browser origins allowed to make changes. |
+| `BOOSKI_ALLOWED_ORIGINS` | Vite and API on 127.0.0.1/localhost | JSON list of browser origins allowed to make changes. Production requires `https://` origins only. |
+| `BOOSKI_FRONTEND_DIST` | unset | Folder with the built web app (`npm run build` → `dist/`). When set, the API serves it too (the container image does). |
+| `BOOSKI_TRUSTED_PROXIES` | `[]` | JSON list of reverse-proxy IPs whose `X-Forwarded-*` headers are trusted. |
+| `BOOSKI_BACKUP_DIR` | `var/backups` | Where `booski backup create` writes. |
 
 ## Containers and cloud hosting
 
-`Dockerfile` builds the production image, and `../docker-compose.yml` runs it with PostgreSQL for anyone who has Docker. You don't need Docker locally: CI builds the image and starts the Compose stack on every push, so the container path stays working for future cloud hosting (any container host plus a managed PostgreSQL 18 database, configured through `BOOSKI_DATABASE_URL`).
+`Dockerfile` builds the production image (API plus the built web app; build it from the repository root), and `../docker-compose.yml` runs it with PostgreSQL for anyone who has Docker. You don't need Docker locally: CI builds the image, starts the Compose stack and checks the app and its security headers on every push. **Before exposing it beyond this machine, work through [DEPLOYMENT.md](DEPLOYMENT.md)** (HTTPS, trusted proxy, rate limiting, MFA/SSO, monitoring, backups).
 
 ## Layout
 
@@ -135,7 +139,8 @@ src/booski_core/
   db.py                engine, sessions, Base (with constraint naming conventions)
   models.py            imports every module's models for Alembic
   health.py            /api/v1/health/live and /ready
-  core/                errors (problem+json), request ids
+  core/                errors (problem+json), request ids, security headers, serving the web app
+  backup.py            pg_dump / pg_restore backups with manifests
   migrations/          Alembic environment and versions
   migrations_config.py Alembic config built in code
   devdb.py             the local PostgreSQL manager

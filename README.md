@@ -1,95 +1,119 @@
-# Booski Studios — Frontend Foundation v0.8
+# Booski Studios — Studio OS v0.9
 
-React + TypeScript + Vite frontend for the Booski Studios operating system. All content is **demo data**; nothing is connected to live services yet.
+React + TypeScript + Vite frontend for the Booski Studios operating system, connected to **Booski Core** (FastAPI + PostgreSQL, in [backend/](backend/README.md)). Projects, departments, tasks, milestones, documents, decisions, approvals and activity are real, persistent and shared by everyone in a workspace. AI agents, usage reporting and integrations are clearly marked **previews** of later phases.
 
-## Run
+## Run (development)
 
-Requires Node.js 20+.
+Requires Node.js 20+ and the backend set up once (see below).
 
 ```bash
-npm ci          # installs the exact versions in package-lock.json
-npm run dev     # http://localhost:5173
-npm run build   # type-check (tsc -b) + production build into dist/
-npm run preview # serve dist/ locally
+# terminal 1: Booski Core on http://127.0.0.1:8000
+cd backend && uv run booski devdb start && uv run booski serve --reload
+
+# terminal 2: the app on http://localhost:5173 (Vite forwards /api to Booski Core)
+npm ci
+npm run dev
 ```
+
+Sign in with the owner account you created with `booski create-owner` (below). Other people join by invitation: **Settings → Invite someone**, then they open `/join` and paste the code.
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | App with hot reload; `/api` is proxied to `BOOSKI_API_URL` (default `http://127.0.0.1:8000`), so the browser sees one origin. |
+| `npm run build` | Type-check (`tsc -b`) and production build into `dist/`. |
+| `npm run lint` | ESLint (no warnings allowed). |
+| `npm test` | Unit and component tests (Vitest, fake API). |
+| `npm run test:e2e` | End-to-end journeys in Chrome against the real API and a **disposable** `*_e2e` PostgreSQL database (created and wiped by `e2e/server.py`; needs `booski devdb` running and Google Chrome installed). |
 
 `package-lock.json` is committed so every install resolves the same dependency versions. Use `npm ci` for clean installs; use `npm install <pkg>` only when deliberately adding or upgrading a dependency, and commit the updated lockfile.
 
 ## Backend (Booski Core)
 
-The API lives in [backend/](backend/README.md) (FastAPI + PostgreSQL 18). It is not connected to the frontend yet; that happens in PR 2.4. Quick start on Windows, with no Docker needed:
+The API lives in [backend/](backend/README.md) (FastAPI + PostgreSQL 18). First-time setup on Windows, with no Docker needed:
 
 ```powershell
 cd backend
 uv sync
 uv run booski devdb setup    # private PostgreSQL 18 in backend/var, writes backend/.env
+uv run booski devdb start
 uv run booski db upgrade
+uv run booski create-owner --email you@studio.com --name "Your Name" --workspace-name "Booski Studios" --workspace-slug booski
 uv run booski serve --reload # http://127.0.0.1:8000/api/v1/health/ready
 ```
 
-`docker-compose.yml` runs the same API in containers for anyone with Docker and is the basis for future server or cloud hosting.
+`docker-compose.yml` runs the API and the built app as one container, for anyone with Docker; it is the basis for future hosting. Read [backend/DEPLOYMENT.md](backend/DEPLOYMENT.md) before exposing it beyond this machine.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every push: the frontend build; backend lint (ruff), types (mypy strict) and tests against a real PostgreSQL 18; and a container smoke test that builds the image, starts the Compose stack and waits for `/api/v1/health/ready`.
+`.github/workflows/ci.yml` runs on every push: frontend lint, type-check, unit tests and build; backend lint (ruff), types (mypy strict) and tests (including backups) against a real PostgreSQL 18; the end-to-end journeys in Chrome against the real API and database; and a container smoke test that builds the image, starts the Compose stack and checks readiness, the served app and its security headers.
 
 ## Project structure
 
 ```
 src/
-  main.tsx            Entry point (BrowserRouter + global CSS)
-  App.tsx             Providers and the route table
-  routes.ts           URL builders for every page (use these instead of hardcoded strings)
-  styles.css          Global styles (unchanged visual design)
-  assets/             Logo and other bundled assets
-  types/              Shared TypeScript domain types
-  data/               DEMO DATA ONLY (projects, departments, agents, decisions…)
-  services/           Data-access layer: StudioApi interface + demo implementation
-  context/            App-wide state: projects/current project, session tasks, toasts
-  hooks/              useResource (async data loading), useFocusTrap (dialogs)
-  components/         Reusable UI (Modal, Icon, DecisionLogList, AgentWorkflowCanvas…)
-    layout/           AppShell, Sidebar, Topbar, navigation config
+  main.tsx            Entry point (query cache, router, auth provider, global CSS)
+  App.tsx             Route table: /login and /join, then the signed-in studio
+  routes.ts           URL builders for every page and record link
+  styles.css          Global styles (unchanged visual design); app.css adds the integration UI
+  api/                Booski Core client (cookies + CSRF), typed endpoints, API types, query hooks
+  auth/               AuthProvider (session from /auth/me), RequireAuth
+  workspace/          WorkspaceProvider (active workspace, switching), role capabilities
+  config/             Department workspace presentation (tabs, actions, artwork)
+  context/            Current project, task dialog, toasts
+  components/         Reusable UI; tasks/, knowledge/, decisions/, approvals/, projects/ record UIs
+    layout/           AppShell, Sidebar (live departments/projects, account menu), Topbar
   pages/              One component per route
+  data/, services/    PREVIEW content for later phases (agents, usage, integrations…)
+  test/               Unit-test helpers (fake API, providers)
+e2e/                  Playwright journeys + the disposable-database server launcher
 ```
 
 ### Routes
 
 | URL | Page |
 | --- | --- |
+| `/login`, `/join` | Sign in; accept an invitation (public) |
 | `/` | Studio Command Centre |
 | `/departments/:slug` | Department workspace (`concept-lab`, `game-development`, `asset-production`, `marketing-studio`, `post-launch-intelligence`) |
 | `/projects/:slug` | Project workspace (`project-horizon`, `dead-frequency`, `neon-drift`) |
 | `/operations` (`?view=…`) | Studio Operations |
-| `/tasks` | Task Centre |
+| `/tasks` (`?task=…`) | Task Centre |
 | `/library`, `/research`, `/templates` | Game Library, Research Library, Template Library |
 | `/agents`, `/cost-usage`, `/decisions`, `/approvals`, `/integrations`, `/knowledge`, `/activity` | Studio Systems |
 | `/settings` | Settings |
 
-Unknown URLs, departments and projects show a "Page not found" page.
+Every other page requires signing in. Departments come from Booski Core (each workspace can rename or add them); `/departments/:slug` works for all of them. Unknown URLs, departments and projects — including restricted projects you aren't on — show "Page not found". `/decisions?decision=…`, `/approvals?approval=…` and `/knowledge?document=…` open a record directly.
 
 **Hosting note:** this is a single-page app using browser history URLs. `vite dev` and `vite preview` handle this automatically. A production host must serve `index.html` for unknown paths (an "SPA fallback"), otherwise refreshing a deep link returns a 404.
 
-### Data flow and the future backend
+### Data flow
 
-Pages never import from `src/data` directly. They call the `studioApi` object exported from `src/services/index.ts`, which implements the `StudioApi` interface in `src/services/studioApi.ts`:
+- **Signing in.** The session lives in an HttpOnly cookie set by Booski Core; the app never sees or stores it. On start-up `AuthProvider` asks `GET /auth/me` who is signed in. Every POST/PUT/PATCH/DELETE carries the session's CSRF token in `X-CSRF-Token` (from the sign-in response, or the readable `__Host-booski_csrf` cookie after a reload). If any request answers 401, the app drops all cached data and returns to the sign-in page with an explanation.
+- **Workspaces.** `WorkspaceProvider` scopes everything to the active workspace (remembered per browser). Switching clears the cache and remounts the app, so no record from one workspace can appear in another.
+- **Data.** Pages read and write through hooks in `src/api/hooks.ts` (TanStack Query): cached, refreshed in the background, cancelled when you navigate away, and re-fetched after every change so every screen agrees. Task ticks are optimistic and roll back if Booski Core refuses. Edits send the record's `version`; if someone else changed it first (409), the app says so and offers a refresh instead of overwriting their work.
+- **Permissions.** Buttons appear only for what your role (and, inside a project, your project access) allows, but Booski Core enforces every rule itself.
 
-```ts
-const decisions = useResource(() => studioApi.listDecisions(), []);
-```
+## Live, preview and planned
 
-Today `studioApi` is `demoStudioApi`, which resolves the bundled demo data. To connect Booski Core (FastAPI), add an implementation of `StudioApi` that uses `fetch` and change the single export in `services/index.ts`. Every method is already async, and pages already handle loading and error states, so pages do not need rewriting.
-
-`StudioApi` is read-only on purpose. No write operations exist yet. Actions such as approving, uploading, creating projects or configuring agents show a "will be connected in a later phase" notice.
-
-## What is demo-only
-
-- **All records and metrics** come from `src/data` and are illustrative.
-- **Tasks:** adding and ticking off tasks changes browser memory only and resets on refresh.
-- **Command bar:** captures and echoes your command; it is not sent to any AI model.
-- **Research upload:** reads the chosen file's name only; the file is not uploaded or stored.
-- **Agent canvas and charts:** visual prototypes, not live execution or real billing.
+| Area | Status |
+| --- | --- |
+| Sign-in, invitations, workspaces, members, sessions (Settings) | **Live** |
+| Projects (create, edit, archive, access lists, workstreams, milestones, progress), Game Library, Studio Operations views | **Live** |
+| Task Centre (filters, subtasks, comments, history), Command Centre metrics/focus/attention/activity | **Live** |
+| Knowledge Base, Research Library (research documents), Template Library (template documents), revisions | **Live** (Markdown text; file uploads planned) |
+| Decision Log, Approvals Centre, Activity & Audit | **Live** (approving records a decision; it executes nothing) |
+| Department workspaces | **Live** tasks, documents, decisions and approvals; some tabs show labelled sample content or "planned" |
+| AI command bar, AI Workforce, agent canvas, Agent Management, Cost & Usage, Integrations Hub, Reference Vault, insights/feedback/asset panels | **Preview** of later phases, labelled as such; nothing is stored or executed |
 
 ## Changelog
+
+### v0.9 — PR 2.4: frontend integration and production readiness
+- Sign-in page, invitation acceptance (`/join`), protected routes, session-expiry handling and sign-out against Booski Core; no tokens in browser storage.
+- Workspace switcher in the account menu; data is scoped per workspace and dropped on switching.
+- Live projects (create/edit/archive, restricted access lists, workstreams, milestones), tasks (subtasks, comments, history, optimistic completion with rollback, conflict handling), documents with revision history and safe Markdown rendering, decisions (options, outcome, supersede), approvals (request, review, resubmit, cancel) and the activity feed with filters and pagination.
+- Departments come from Booski Core; department tabs combine live records with clearly labelled samples.
+- Preview content is labelled everywhere it remains; demo records that are now real were removed.
+- Vite proxies `/api` in development; Vitest unit tests, ESLint and Playwright end-to-end tests added.
 
 ### v0.8 — PR1: frontend foundations
 - Split the single-file prototype into `pages/`, `components/`, `context/`, `hooks/`, `services/`, `data/`, `types/` and `assets/`. Replaced `any` props with typed interfaces; enabled `noUnusedLocals` / `noUnusedParameters`.
@@ -120,4 +144,4 @@ Today `studioApi` is `demoStudioApi`, which resolves the bundled demo data. To c
 - Reference Vault moved into project workspaces; department tabs redesigned per department.
 
 ## Next milestone
-PR 2.4: connect this frontend to Booski Core (sign-in screen, live `StudioApi`, workspace binding) and production readiness. Booski Core already serves projects, departments, tasks, milestones, documents, decisions, approvals and the activity feed.
+Phase 3 — AI orchestration: agents acting through the same permission rules, the AI command bar, and approvals that gate agent actions.

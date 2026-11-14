@@ -14,6 +14,7 @@ export function AgentManagementPage() {
         eyebrow="BOOSKI AI CORE / WORKFORCE"
         title="Agent Management"
         description="Manage the specialist AI workforce, review responsibilities and understand which tools and permissions each agent can use."
+        source="planned"
       />
       <ResourceView resource={agents} label="agents">
         {(rows) => (

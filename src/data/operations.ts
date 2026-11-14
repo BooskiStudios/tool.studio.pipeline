@@ -1,4 +1,4 @@
-import type { AgentNode, AgentRecord, Approval, AuditEvent, Decision, Integration, UsageReport } from "../types";
+import type { AgentNode, AgentRecord, Integration, UsageReport } from "../types";
 
 /** DEMO DATA — the specialist AI workforce shown in Agent Management. */
 export const demoAgents: AgentRecord[] = [
@@ -43,21 +43,6 @@ export const demoUsage: UsageReport = {
   ],
 };
 
-/** DEMO DATA — sample Decision Log entries. */
-export const demoDecisions: Decision[] = [
-  { id: "dec-1", date: "04 Nov 2026 · 14:32", decision: "Keep Booski Core model-provider agnostic", department: "Studio Operations", agent: "Architecture Agent", type: "Architecture", reason: "Avoid locking orchestration and future workflows to a single model provider." },
-  { id: "dec-2", date: "04 Nov 2026 · 12:10", decision: "Use a single central Decision Log with contextual filters", department: "Studio Operations", agent: "Orchestrator", type: "Product", reason: "Maintain one source of truth while allowing department-level views." },
-  { id: "dec-3", date: "03 Nov 2026 · 16:45", decision: "Unity is the first supported engine integration", department: "Game Development", agent: "Unity Agent", type: "Technical", reason: "Prioritise the existing Unity workflow before adding Unreal support." },
-  { id: "dec-4", date: "02 Nov 2026 · 11:20", decision: "Separate project knowledge from studio-wide knowledge", department: "Concept Lab", agent: "Research Agent", type: "Knowledge", reason: "Prevent project-specific assumptions becoming universal studio rules." },
-];
-
-/** DEMO DATA — pending approvals. Nothing is actually approved or executed. */
-export const demoApprovals: Approval[] = [
-  { id: "apr-1", agent: "Unity Agent", title: "Review controller architecture changes", department: "Game Development", kind: "File modification" },
-  { id: "apr-2", agent: "Marketing Agent", title: "Approve gameplay showcase script", department: "Marketing Studio", kind: "Content approval" },
-  { id: "apr-3", agent: "Asset Agent", title: "Approve environment asset direction", department: "Asset Production", kind: "Creative approval" },
-];
-
 /** DEMO DATA — integration catalogue. No integration is connected. */
 export const demoIntegrations: Integration[] = [
   { id: "unity", name: "Unity", category: "Game engine", status: "Not connected" },
@@ -68,13 +53,4 @@ export const demoIntegrations: Integration[] = [
   { id: "discord", name: "Discord", category: "Community feedback", status: "Not connected" },
   { id: "youtube", name: "YouTube", category: "Video & comments", status: "Not connected" },
   { id: "claude-code", name: "Claude Code", category: "AI development tooling", status: "Not connected" },
-];
-
-/** DEMO DATA — illustrative audit trail. */
-export const demoAuditEvents: AuditEvent[] = [
-  { id: "aud-1", agent: "Unity Agent", action: "Reviewed FPS controller architecture", department: "Game Development", time: "Today · 14:32" },
-  { id: "aud-2", agent: "Research Agent", action: "Prepared indie horror market scan", department: "Concept Lab", time: "Today · 12:10" },
-  { id: "aud-3", agent: "Asset Agent", action: "Collected coastal environment references", department: "Asset Production", time: "Yesterday · 16:45" },
-  { id: "aud-4", agent: "Marketing Agent", action: "Drafted gameplay showcase outline", department: "Marketing Studio", time: "Yesterday · 11:20" },
-  { id: "aud-5", agent: "Orchestrator", action: "Routed new work to specialist agents", department: "Studio Operations", time: "02 Nov · 09:15" },
 ];

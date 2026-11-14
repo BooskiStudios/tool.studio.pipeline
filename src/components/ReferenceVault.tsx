@@ -4,7 +4,10 @@ import { useResource } from "../hooks/useResource";
 import { studioApi } from "../services";
 import { ResourceView } from "./common";
 
-/** Project-specific references (Project Workspace → Reference Vault tab). */
+/**
+ * Project Workspace → Reference Vault. PREVIEW: collecting references needs file storage and AI
+ * research, both planned for later phases, so this shows labelled examples rather than stored records.
+ */
 export function ReferenceVault({ projectSlug }: { projectSlug: string }) {
   const notify = useToast();
   const references = useResource(() => studioApi.listProjectReferences(projectSlug), [projectSlug]);
@@ -12,9 +15,9 @@ export function ReferenceVault({ projectSlug }: { projectSlug: string }) {
   return (
     <div className="reference-vault">
       <div className="vault-toolbar">
-        <p>References collected by Booski or saved by you for this project.</p>
-        <button type="button" className="primary-btn" onClick={() => notify("Reference upload and URL capture will be connected to project storage.")}>
-          <Plus size={14} aria-hidden="true" /> Add reference
+        <p><span className="demo-label">PREVIEW · LATER PHASE</span> Examples of references Booski will collect or you will save for this project.</p>
+        <button type="button" className="secondary-btn" onClick={() => notify("Reference upload and link capture arrive with file storage in a later phase.")}>
+          <Plus size={14} aria-hidden="true" /> Add reference · planned
         </button>
       </div>
       <ResourceView resource={references} label="references">
@@ -26,7 +29,7 @@ export function ReferenceVault({ projectSlug }: { projectSlug: string }) {
                 <b>{r.title}</b>
                 <small>{r.detail}</small>
               </span>
-              <em>{r.source}</em>
+              <em>{r.source} · example</em>
               <ArrowUpRight size={15} className="muted-text" aria-hidden="true" />
             </div>
           ))

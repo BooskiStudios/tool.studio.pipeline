@@ -35,7 +35,12 @@ const icons: Record<IconKey, LucideIcon> = {
   workflow: Workflow,
 };
 
-export function Icon({ name, ...props }: { name: IconKey } & LucideProps) {
-  const Component = icons[name];
+function isIconKey(name: string): name is IconKey {
+  return name in icons;
+}
+
+/** Accepts any string (e.g. a department icon key from Booski Core); unknown names show a folder. */
+export function Icon({ name, ...props }: { name: IconKey | string } & LucideProps) {
+  const Component = isIconKey(name) ? icons[name] : FolderKanban;
   return <Component aria-hidden="true" {...props} />;
 }

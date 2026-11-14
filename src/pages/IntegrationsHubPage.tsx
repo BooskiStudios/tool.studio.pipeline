@@ -14,6 +14,7 @@ export function IntegrationsHubPage() {
         eyebrow="BOOSKI AI CORE / CONNECTIONS"
         title="Integrations Hub"
         description="Connect the tools and platforms used across the studio, then control which agents can access each connection."
+        source="planned"
       />
       <ResourceView resource={integrations} label="integrations">
         {(rows) => (

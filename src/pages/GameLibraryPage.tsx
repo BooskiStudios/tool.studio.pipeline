@@ -3,14 +3,16 @@ import { useNavigate } from "react-router";
 import { ArrowUpRight, SearchX } from "lucide-react";
 import { EmptyState, matchesQuery, SearchField } from "../components/common";
 import { useProjects } from "../context/ProjectContext";
+import { ErrorState } from "../components/ui";
+import { PROJECT_STATUS, projectImage } from "../lib/format";
 import { paths } from "../routes";
 
 /** `/library` — the studio's games as a browsable library. */
 export function GameLibraryPage() {
   const navigate = useNavigate();
-  const { projects } = useProjects();
+  const { projects, error, refetch } = useProjects();
   const [query, setQuery] = useState("");
-  const visible = (projects ?? []).filter((p) => matchesQuery(query, p.name, p.type, p.status, p.engine));
+  const visible = (projects ?? []).filter((p) => matchesQuery(query, p.name, p.project_type, PROJECT_STATUS[p.status], p.engine));
   const count = projects ? `${visible.length} ${visible.length === 1 ? "title" : "titles"}` : "Loading…";
 
   return (
@@ -24,22 +26,24 @@ export function GameLibraryPage() {
         <SearchField value={query} onChange={setQuery} placeholder="Search your library..." />
         <span aria-live="polite">{count}</span>
       </div>
-      {projects && visible.length === 0 ? (
-        <EmptyState icon={SearchX} title="No titles found">No games or prototypes match “{query}”.</EmptyState>
+      {error ? (
+        <ErrorState error={error} label="your games" onRetry={refetch} />
+      ) : projects && visible.length === 0 ? (
+        <EmptyState icon={SearchX} title="No titles found">{query ? `No games or prototypes match “${query}”.` : "No projects yet."}</EmptyState>
       ) : (
         <div className="game-library-grid">
           {visible.map((p) => (
-            <button type="button" className="game-library-card" key={p.slug} onClick={() => navigate(paths.project(p.slug))}>
+            <button type="button" className="game-library-card" key={p.id} onClick={() => navigate(paths.project(p.slug))}>
               <div className="library-cover">
-                <img src={p.image} alt="" />
-                <span>{p.status}</span>
+                <img src={projectImage(p)} alt="" />
+                <span>{PROJECT_STATUS[p.status]}</span>
               </div>
               <div className="library-info">
                 <b>{p.name}</b>
-                <small>{p.type}</small>
-                <div className="library-progress"><span style={{ width: `${p.progress}%` }} /></div>
+                <small>{p.project_type || "Project"}</small>
+                <div className="library-progress"><span style={{ width: `${p.progress.percent}%` }} /></div>
                 <div>
-                  <small>{p.engine} · {p.progress}% complete</small>
+                  <small>{p.engine ? `${p.engine} · ` : ""}{p.progress.percent}% complete</small>
                   <ArrowUpRight size={15} aria-hidden="true" />
                 </div>
               </div>

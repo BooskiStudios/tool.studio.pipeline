@@ -8,8 +8,10 @@ from fastapi import FastAPI
 from booski_core import __version__, health
 from booski_core.config import Settings, get_settings
 from booski_core.core.errors import install_error_handlers
+from booski_core.core.frontend import install_frontend
 from booski_core.core.origin import install_origin_check
 from booski_core.core.request_id import install_request_id
+from booski_core.core.security_headers import install_security_headers
 from booski_core.db import create_db_engine, create_session_factory
 from booski_core.modules.activity.router import router as activity_router
 from booski_core.modules.approvals.router import router as approvals_router
@@ -67,8 +69,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Middleware added last runs first: request ids wrap everything, including origin rejections.
     install_origin_check(app, settings.allowed_origins)
     install_request_id(app)
+    install_security_headers(app, production=settings.is_production)
     install_error_handlers(app)
 
     for router in ROUTERS:
         app.include_router(router, prefix=API_PREFIX)
+    # Last, so its catch-all route never shadows an API route.
+    if settings.frontend_dist is not None:
+        install_frontend(app, settings.frontend_dist)
     return app
