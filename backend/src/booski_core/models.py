@@ -11,6 +11,7 @@ from booski_core.modules.decisions.models import Decision, DecisionDocument
 from booski_core.modules.departments.models import Department
 from booski_core.modules.identity.models import LoginAttempt, User, UserSession
 from booski_core.modules.knowledge.models import Document, DocumentRevision
+from booski_core.modules.memory.models import Memory
 from booski_core.modules.milestones.models import Milestone
 from booski_core.modules.projects.models import Project, ProjectMember, Workstream
 from booski_core.modules.tasks.models import Task, TaskComment
@@ -33,6 +34,7 @@ __all__ = [
     "Invitation",
     "LoginAttempt",
     "Membership",
+    "Memory",
     "Milestone",
     "Project",
     "ProjectMember",

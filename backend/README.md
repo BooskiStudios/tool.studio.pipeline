@@ -50,7 +50,9 @@ Everything lives under `/api/v1/w/{workspace_slug}` and is only visible to membe
 | Decisions | `GET`/`POST /decisions` · `GET`/`PATCH /decisions/{id}` · `GET /decisions/{id}/history` |
 | Approvals | `GET`/`POST /approvals` · `GET`/`PATCH /approvals/{id}` · `GET`/`POST /approvals/{id}/reviews` · `POST …/resubmit` · `POST …/cancel` |
 | Activity | `GET /activity` (filters: project, entity_type, entity_id, actor, verb, since, until) |
-| AI (PR 3.2) | `GET`/`PATCH /ai/settings` (on/off, monthly budget) · `POST /ai/check` (one tiny request through the gateway) · `GET /ai/catalog` (models, prices, tiers, tasks) · `GET /ai/usage?month=YYYY-MM` · `GET /ai/requests` |
+| Memory (PR 3.3) | `GET`/`POST /memories` (filters: project, department, kind, archived) · `GET`/`PATCH /memories/{id}` · `GET /memories/{id}/history` |
+| Search (PR 3.3) | `GET /search?q=` (memory, documents, decisions; filters: project, department, type, limit) — full-text, only what you can see |
+| AI (PR 3.2) | `GET`/`PATCH /ai/settings` (on/off, monthly budget) · `POST /ai/check` (one tiny request through the gateway) · `GET /ai/catalog` (models, prices, tiers, tasks) · `GET /ai/usage?month=YYYY-MM` · `GET /ai/requests` · `POST /ai/context` (preview the knowledge an AI request would get, within a token budget; PR 3.3) |
 
 **Who can do what** (the backend enforces all of it):
 
@@ -60,7 +62,7 @@ Everything lives under `/api/v1/w/{workspace_slug}` and is only visible to membe
 | Comment on tasks | ✓ | ✓ | ✓ | ✓ | – |
 | Create tasks | ✓ | ✓ | ✓ | ✓ | – |
 | Edit any task | ✓ | ✓ | ✓ | own or assigned | – |
-| Milestones, documents, decisions, request approvals | ✓ | ✓ | ✓ | – | – |
+| Milestones, documents, decisions, memory entries, request approvals | ✓ | ✓ | ✓ | – | – |
 | Decide approvals | ✓ | ✓ | when assigned | – | – |
 | Projects, workstreams, project access, departments | ✓ | ✓ | – | – | – |
 | See invitation events in the activity feed | ✓ | ✓ | – | – | – |

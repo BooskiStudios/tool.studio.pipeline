@@ -29,6 +29,9 @@ AiEffort = Literal["low", "medium", "high", "xhigh", "max"]
 # blocked: refused by Booski before calling a provider (AI off, budget reached, no provider configured).
 # refused: the model declined the request. failed: the provider call errored or timed out.
 AiRequestStatus = Literal["succeeded", "refused", "failed", "blocked"]
+# Memory and retrieval (PR 3.3)
+MemoryKind = Literal["fact", "convention", "lesson", "preference"]
+SourceType = Literal["memory", "document", "decision"]
 
 
 def values(literal: object) -> tuple[str, ...]:

@@ -1,7 +1,18 @@
 import uuid
+from typing import Any
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, UniqueConstraint, Uuid, text
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy import (
+    CheckConstraint,
+    Computed,
+    ForeignKey,
+    Index,
+    Integer,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    text,
+)
+from sqlalchemy.dialects.postgresql import ARRAY, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 
 from booski_core.db import (
@@ -17,6 +28,13 @@ from booski_core.db import (
 from booski_core.vocab import DocumentKind, values
 
 MAX_BODY_BYTES = 1_000_000  # Markdown text. Binary files will go to file storage, never PostgreSQL.
+
+# Full-text search (PR 3.3, D-P3-5): English stemming, title weighted above body and summary.
+DOCUMENT_SEARCH_EXPRESSION = "setweight(to_tsvector('english'::regconfig, summary), 'C')"
+REVISION_SEARCH_EXPRESSION = (
+    "setweight(to_tsvector('english'::regconfig, title), 'A') || "
+    "setweight(to_tsvector('english'::regconfig, body), 'B')"
+)
 
 
 class Document(Versioned, Archivable, Timestamps, Base):
@@ -34,6 +52,7 @@ class Document(Versioned, Archivable, Timestamps, Base):
         Index("ix_documents_workspace_id_kind_updated_at", "workspace_id", "kind", "updated_at"),
         Index("ix_documents_project_id", "project_id"),
         Index("ix_documents_tags", "tags", postgresql_using="gin"),
+        Index("ix_documents_search_vector", "search_vector", postgresql_using="gin"),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -51,6 +70,10 @@ class Document(Versioned, Archivable, Timestamps, Base):
     updated_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("users.id", ondelete="SET NULL")
     )
+    # Full-text search over the summary (PR 3.3); the title and body are indexed on each revision.
+    search_vector: Mapped[Any] = mapped_column(
+        TSVECTOR, Computed(DOCUMENT_SEARCH_EXPRESSION, persisted=True), deferred=True
+    )
 
 
 class DocumentRevision(CreatedAt, Base):
@@ -62,6 +85,7 @@ class DocumentRevision(CreatedAt, Base):
         same_workspace(("document_id", "workspace_id"), "documents"),
         CheckConstraint("revision_no >= 1", name="revision_positive"),
         CheckConstraint(f"octet_length(body) <= {MAX_BODY_BYTES}", name="body_size"),
+        Index("ix_document_revisions_search_vector", "search_vector", postgresql_using="gin"),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -73,4 +97,7 @@ class DocumentRevision(CreatedAt, Base):
     change_note: Mapped[str] = mapped_column(Text, server_default=text("''"))
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("users.id", ondelete="SET NULL")
+    )
+    search_vector: Mapped[Any] = mapped_column(
+        TSVECTOR, Computed(REVISION_SEARCH_EXPRESSION, persisted=True), deferred=True
     )

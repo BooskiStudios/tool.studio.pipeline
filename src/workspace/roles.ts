@@ -8,7 +8,8 @@ import type { Capability, Role } from "../api/types";
 const EVERYONE: Capability[] = ["workspace.read", "members.read", "activity.read"];
 const COLLABORATE: Capability[] = ["tasks.create", "comments.write"];
 const DEVELOP: Capability[] = [
-  "tasks.edit_any", "milestones.write", "documents.write", "decisions.write", "approvals.request", "approvals.review_assigned",
+  "tasks.edit_any", "milestones.write", "documents.write", "decisions.write", "memory.write", "approvals.request",
+  "approvals.review_assigned",
 ];
 const ADMINISTER: Capability[] = [
   "workspace.update", "members.manage", "invitations.manage", "departments.manage", "projects.manage", "approvals.decide",

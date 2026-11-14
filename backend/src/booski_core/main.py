@@ -21,8 +21,10 @@ from booski_core.modules.decisions.router import router as decisions_router
 from booski_core.modules.departments.router import router as departments_router
 from booski_core.modules.identity.router import router as auth_router
 from booski_core.modules.knowledge.router import router as documents_router
+from booski_core.modules.memory.router import router as memory_router
 from booski_core.modules.milestones.router import router as milestones_router
 from booski_core.modules.projects.router import router as projects_router
+from booski_core.modules.retrieval.router import context_router, search_router
 from booski_core.modules.tasks.router import router as tasks_router
 from booski_core.modules.workspaces.router import invitations_router, workspace_router, workspaces_router
 
@@ -41,6 +43,9 @@ ROUTERS = (
     approvals_router,
     activity_router,
     ai_router,
+    memory_router,
+    search_router,
+    context_router,
 )
 
 API_PREFIX = "/api/v1"
