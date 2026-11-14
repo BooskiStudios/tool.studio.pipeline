@@ -10,7 +10,7 @@ FROM node:24.12.0-bookworm-slim AS web
 WORKDIR /web
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
-COPY index.html tsconfig.json tsconfig.app.json vite.config.ts ./
+COPY index.html tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts ./
 COPY src ./src
 RUN npx tsc -p tsconfig.app.json && npx vite build
 
