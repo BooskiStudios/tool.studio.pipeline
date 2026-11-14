@@ -64,6 +64,7 @@ Also keep the categories in `docs/DECISIONS.md` distinct: explicitly approved de
 - **One branch per milestone or PR**, created from a **verified, up-to-date `main`**: fetch, and check local `main` matches `origin/main` (fast-forward only if that's safe).
 - **Branch names** follow `phase-<n>/pr<n.m>-<short-name>`, for example `phase-3/pr3.0-booski-blueprint`. Agree the exact name when the milestone is planned.
 - **Never commit, push, merge, open or close PRs, delete branches, force-push or rebase shared branches without explicit approval for that action.** Approval for one action doesn't extend to the next.
+- **`main` is protected (D25):** the four CI jobs must pass, and force-pushes and deletion are blocked, for administrators too. Every change, including documentation and status updates, reaches `main` through a pull request.
 - **Merging:**
   - Phase 2 was merged with PRs to `main` using **merge commits**, no squash or rebase (D22). That was agreed for **Phase 2 only**; it is not a standing rule.
   - For each future merge, propose a strategy and get the human's approval.

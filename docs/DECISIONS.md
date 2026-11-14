@@ -41,8 +41,10 @@
 | D22 | Phase 2 merged as stacked PRs with merge commits | Explicitly approved decision (Phase 2 only) | Completed |
 | D23 | Backups with PostgreSQL's own tools | Explicit requirement + implementation choice | Implemented |
 | D24 | PR3.0 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.0 only) | Completed |
+| D25 | Branch protection on `main` (PROP-1 accepted) | Explicitly approved decision | Implemented |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
-| PROP-1, PROP-2 | Protect `main`; delete the five merged Phase 2 branches | Proposal | Awaiting decision |
+| PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
+| PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
 
 ---
 
@@ -267,6 +269,20 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Alternatives presented:** squash merge or rebase merge; for the status update, a direct commit to `main` or leaving it for a later session.
 - **Scope:** agreed for PR3.0 (and its follow-up status PR) only. Like D22, it is **not** a standing rule: each future merge strategy needs the human's approval.
 
+### D25 — Branch protection on `main`
+- **Category:** explicitly approved decision. Accepts PROP-1.
+- **Date:** 14 November 2026.
+- **Evidence:** after PR3.0 merged, Claude recommended doing PROP-1 first and then planning PR3.1; the human replied "Lets do it".
+- **Decision (as applied through the GitHub API):**
+  - The four CI jobs must pass before anything merges into `main`: "Frontend lint, types, tests and build", "Backend lint, types and tests", "End-to-end (browser + API + PostgreSQL)" and "Container smoke test".
+  - Force-pushes to `main` and deleting `main` are blocked.
+  - The rules apply to administrators too, so no one (including Claude through `gh`) can push unchecked commits directly to `main`. Changes reach `main` through pull requests.
+- **Implementation choices (not separately discussed):**
+  - Branches are **not** required to be up to date with `main` before merging.
+  - No pull-request review is required, because the human is the only reviewer.
+- **Consequence:** documentation updates to `main`, including status updates, also go through pull requests.
+- **Reversal:** the human can change these settings in GitHub (Settings → Branches) at any time; record any change here.
+
 ---
 
 ## Phase 3 direction (D-P3-1 – D-P3-13)
@@ -315,6 +331,7 @@ Notes for later review. None of these is a decision.
 These are recommendations only. **Do not act on them without explicit approval.**
 
 ### PROP-1 — Protect `main`
+- **Status:** **accepted** on 14 November 2026 and implemented; see D25. The proposal text below is kept as written.
 - **Category:** proposal.
 - **Proposal:** enable branch protection on `main`: require the four CI jobs (frontend, backend, end-to-end, container) to pass, and disallow force-pushes and branch deletion.
 - **Why:** `main` was unprotected when checked on 14 November 2026.

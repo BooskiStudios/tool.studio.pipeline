@@ -58,7 +58,7 @@ These were true when checked. Re-check before relying on them.
   - `phase-3/pr3.0-booski-blueprint`, merged through PR #6, still present on GitHub and locally;
   - `phase-3/pr3.0-status-complete`, this follow-up status update;
   - five merged `phase-2/*` branches, still present on GitHub and locally (PROP-2).
-- **Branch protection on `main`:** off (PROP-1).
+- **Branch protection on `main`:** **on** since 14 November 2026 (D25): the four CI jobs are required, force-pushes and deletion are blocked, and the rules apply to administrators.
 - **Test suites** (unchanged by PR3.0, which was documentation only):
   - 574 backend tests (counted with `pytest --collect-only` at `a68d829`);
   - 51 frontend unit tests (from the last full Vitest run);
@@ -78,7 +78,6 @@ These were true when checked. Re-check before relying on them.
 
 | Question | Where it's tracked |
 |---|---|
-| Enable branch protection on `main`? | PROP-1, [DECISIONS.md](DECISIONS.md#prop-1--protect-main) |
 | Delete the five merged Phase 2 branches? | PROP-2, [DECISIONS.md](DECISIONS.md#prop-2--delete-merged-phase-2-branches) |
 | How and when is file storage built, and in which milestone? | [ROADMAP.md](ROADMAP.md#open-cross-cutting-requirements) |
 | Where does the integrations module go? | [ROADMAP.md](ROADMAP.md#open-cross-cutting-requirements) |
@@ -99,5 +98,5 @@ These were true when checked. Re-check before relying on them.
 ## Next recommended action
 
 1. Confirm that CI on `main` passed after this status update was merged (`gh run list --branch main --limit 1`).
-2. Optionally decide PROP-1 and PROP-2.
+2. Optionally decide PROP-2. (PROP-1 was accepted and implemented as D25.)
 3. Only if the human asks: plan PR3.1. Review its objectives in ROADMAP.md, propose an approach and branch name, and agree acceptance criteria. PR3.1 starts only on explicit approval.
