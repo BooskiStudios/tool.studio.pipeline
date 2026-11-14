@@ -2,7 +2,7 @@
 
 > **What this document is:** the actual state of the project as last verified. Update it whenever the real state changes (a merge, a new branch, CI results, a decision) in the same branch as the change.
 >
-> **Last verified:** 14 November 2026, while preparing PR3.0 on branch `phase-3/pr3.0-booski-blueprint`.
+> **Last verified:** 14 November 2026, after PR3.0 was merged (PR #6), while preparing the follow-up status update on branch `phase-3/pr3.0-status-complete`.
 >
 > The Git, PR and CI facts below are **results of that verification, not guarantees about the present**. Every new session must re-check them before relying on them:
 > - `git status`, `git branch -a`, `git log origin/main -5`;
@@ -12,13 +12,12 @@
 
 ## Where we are
 
-- **Phase:** Phase 3 — AI Core & Workforce has started, but **only PR3.0 is approved**.
-- **Current approved milestone:** **PR3.0 — Booski Blueprint & Project Documentation**, approved 14 November 2026.
-  - **Status: Awaiting review.** The documentation is written on `phase-3/pr3.0-booski-blueprint`; at last verification it was not committed, pushed or merged.
+- **Phase:** Phase 3 — AI Core & Workforce is in progress. **No milestone is currently approved.**
+- **Last completed milestone:** **PR3.0 — Booski Blueprint & Project Documentation**. Approved 14 November 2026 and merged into `main` through PR #6 (merge commit `65755f1`); CI on `main` passed.
 - **Next milestone:** **PR3.1 — Open-Source Capability Adoption Audit**.
   - **Status: Planned.** Not approved, not started.
-  - It may start only after PR3.0 is reviewed **and** the human explicitly approves PR3.1.
-- **What exists today:** a working, persistent, multi-user studio application (Booski Core plus the React interface). It is the **foundation for the future Booski Control Plane**, not the completed Control Plane architecture described in [ARCHITECTURE.md](ARCHITECTURE.md). It stores accounts, workspaces, roles, departments, projects, milestones, tasks, documents, decisions, approvals and activity.
+  - It may start only when the human explicitly approves PR3.1, after its plan and acceptance criteria are agreed.
+- **What exists today:** a working, persistent, multi-user studio application (Booski Core plus the React interface). It is the **foundation for the future Booski Control Plane**, not the completed Control Plane architecture described in [ARCHITECTURE.md](ARCHITECTURE.md). It stores accounts, workspaces, roles, departments, projects, milestones, tasks, documents, decisions, approvals and activity. The repository also holds the project documentation (`CLAUDE.md` and `docs/`), which is the source of truth for the plan and process.
 - **What does not exist:** any AI functionality.
   - AI-related screens (command bar, AI workforce, agents, cost and usage, integrations) are **labelled previews**.
   - No AI provider, model registry, memory system, agent, orchestration, tool execution, Local Worker, Claude Code integration or file storage has been built.
@@ -33,6 +32,7 @@
 | **PR2.2** — Identity & access | `bbe98dc` | PR #3, merge commit `e956594` | `main` run 43585478829 ✅ |
 | **PR2.3** — Complete backend platform | `b11d272` | PR #4, merge commit `de24448` | `main` run 43585653650 ✅ |
 | **PR2.4** — Frontend integration & production readiness | `dc6b4c0`, `5e6abb7` | PR #5, merge commit `a68d829` | `main` run 43585888671 ✅ (all four jobs) |
+| **PR3.0** — Booski Blueprint & Project Documentation | `abafcd6` | PR #6, merge commit `65755f1` (14 Nov 2026; merge commit approved for this PR, D24) | PR runs 43626305259 and 43626320236 ✅; `main` run 43626588068 ✅ (all four jobs) |
 
 All PR2.x merges took place on 14 November 2026. Branch-level CI runs are listed in [ROADMAP.md](ROADMAP.md#phase-2--platform-foundations--complete).
 
@@ -46,31 +46,32 @@ All PR2.x merges took place on 14 November 2026. Branch-level CI runs are listed
 
 These were true when checked. Re-check before relying on them.
 
-- **`main`:** `a68d829` "Merge pull request #5 …", the GitHub default branch.
-- **CI on `main` at `a68d829`:** run 43585888671 passed:
+- **`main`:** `65755f1` "Merge pull request #6 …", the GitHub default branch.
+- **CI on `main` at `65755f1`:** run 43626588068 passed:
   - frontend lint, types, tests and build;
   - backend lint, types and tests (real PostgreSQL, PostgreSQL 18 client tools installed);
   - end-to-end (browser + API + PostgreSQL);
   - container smoke test.
-- **Open pull requests:** none. PRs #1–#5 were merged.
+- **Pull requests:** PRs #1–#6 were merged. This status update is a follow-up docs-only PR from `phase-3/pr3.0-status-complete`.
 - **Branches:**
   - `main`;
-  - `phase-3/pr3.0-booski-blueprint`, created locally from `a68d829` and not pushed; it holds the uncommitted PR3.0 documentation;
+  - `phase-3/pr3.0-booski-blueprint`, merged through PR #6, still present on GitHub and locally;
+  - `phase-3/pr3.0-status-complete`, this follow-up status update;
   - five merged `phase-2/*` branches, still present on GitHub and locally (PROP-2).
 - **Branch protection on `main`:** off (PROP-1).
-- **Test suites at `a68d829`:**
-  - 574 backend tests (counted with `pytest --collect-only`);
+- **Test suites** (unchanged by PR3.0, which was documentation only):
+  - 574 backend tests (counted with `pytest --collect-only` at `a68d829`);
   - 51 frontend unit tests (from the last full Vitest run);
   - 14 end-to-end journeys;
   - the container smoke test in CI.
 
 ## Outstanding reviews
 
-- **PR3.0 documentation:** awaiting the human's review. Nothing further happens without explicit approval: no commit, push, PR or merge.
+- None. This status update is the docs-only follow-up the human approved with the PR3.0 merge (D24); it is merged with a merge commit once its CI passes.
 
 ## Blockers
 
-- None for PR3.0.
+- None.
 - Before any external (non-localhost) deployment, the checklist in `backend/DEPLOYMENT.md` applies: HTTPS, trusted proxy, rate limiting, MFA or SSO, monitoring and backups.
 
 ## Outstanding decisions
@@ -97,7 +98,6 @@ These were true when checked. Re-check before relying on them.
 
 ## Next recommended action
 
-1. The human reviews the PR3.0 documentation on `phase-3/pr3.0-booski-blueprint`.
-2. If approved, and only with explicit approval for each step: commit, push, open a PR to `main`, wait for CI, then merge using the strategy the human approves. Phase 2 used merge commits (D22), but that was agreed for Phase 2 only. After merging, mark PR3.0 **Complete** here and in ROADMAP.md.
-3. Optionally decide PROP-1 and PROP-2.
-4. Only then, if the human asks: plan PR3.1. Review its objectives in ROADMAP.md, propose an approach, and agree acceptance criteria. PR3.1 starts only on explicit approval.
+1. Confirm that CI on `main` passed after this status update was merged (`gh run list --branch main --limit 1`).
+2. Optionally decide PROP-1 and PROP-2.
+3. Only if the human asks: plan PR3.1. Review its objectives in ROADMAP.md, propose an approach and branch name, and agree acceptance criteria. PR3.1 starts only on explicit approval.

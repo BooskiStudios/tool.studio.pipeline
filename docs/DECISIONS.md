@@ -40,6 +40,7 @@
 | D21 | Seven default departments | Factual implementation record · unknown historical origin | Implemented |
 | D22 | Phase 2 merged as stacked PRs with merge commits | Explicitly approved decision (Phase 2 only) | Completed |
 | D23 | Backups with PostgreSQL's own tools | Explicit requirement + implementation choice | Implemented |
+| D24 | PR3.0 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.0 only) | Completed |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1, PROP-2 | Protect `main`; delete the five merged Phase 2 branches | Proposal | Awaiting decision |
 
@@ -251,6 +252,20 @@ These entries cover what happened after the plan was approved. Each is classifie
   - credentials passed through environment variables.
 - **Date:** 14 November 2026 (PR2.4).
 - **Outcome:** scheduled backups and retention automation remain open.
+
+---
+
+## Phase 3 entries
+
+### D24 — How PR3.0 was merged
+- **Category:** explicitly approved decision, **for PR3.0 only**.
+- **Date:** 14 November 2026.
+- **Evidence:** the human gave final approval to commit and merge PR3.0, then chose "Merge commit" for the merge strategy and "Follow-up PR" for the status update.
+- **Decision:**
+  - PR #6 was merged into `main` with a **merge commit** (`65755f1`), after its CI passed.
+  - Marking PR3.0 Complete was done afterwards in a separate docs-only PR, so the status records the real merge commit and CI run.
+- **Alternatives presented:** squash merge or rebase merge; for the status update, a direct commit to `main` or leaving it for a later session.
+- **Scope:** agreed for PR3.0 (and its follow-up status PR) only. Like D22, it is **not** a standing rule: each future merge strategy needs the human's approval.
 
 ---
 
