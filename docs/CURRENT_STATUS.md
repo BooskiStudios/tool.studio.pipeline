@@ -2,7 +2,7 @@
 
 > **What this document is:** the actual state of the project as last verified. Update it whenever the real state changes (a merge, a new branch, CI results, a decision) in the same branch as the change.
 >
-> **Last verified:** 14 November 2026, after PR3.0 was merged (PR #6), while preparing the follow-up status update on branch `phase-3/pr3.0-status-complete`.
+> **Last verified:** 14 November 2026, while preparing PR3.1 on branch `phase-3/pr3.1-ccgs-audit` (after PR #7 was merged).
 >
 > The Git, PR and CI facts below are **results of that verification, not guarantees about the present**. Every new session must re-check them before relying on them:
 > - `git status`, `git branch -a`, `git log origin/main -5`;
@@ -12,11 +12,13 @@
 
 ## Where we are
 
-- **Phase:** Phase 3 — AI Core & Workforce is in progress. **No milestone is currently approved.**
-- **Last completed milestone:** **PR3.0 — Booski Blueprint & Project Documentation**. Approved 14 November 2026 and merged into `main` through PR #6 (merge commit `65755f1`); CI on `main` passed.
-- **Next milestone:** **PR3.1 — Open-Source Capability Adoption Audit**.
-  - **Status: Planned.** Not approved, not started.
-  - It may start only when the human explicitly approves PR3.1, after its plan and acceptance criteria are agreed.
+- **Phase:** Phase 3 — AI Core & Workforce is in progress.
+- **Current approved milestone:** **PR3.1 — Open-Source Capability Adoption Audit**, approved 14 November 2026 (D26).
+  - **Status: Awaiting review.** The audit and the proposed toolkit specification are written on `phase-3/pr3.1-ccgs-audit` and committed locally; at last verification the branch was not pushed and no PR was open.
+  - Deliverables: [audits/PR3.1-CCGS-AUDIT.md](audits/PR3.1-CCGS-AUDIT.md) and [BOOSKI_GAME_DEV_TOOLKIT.md](BOOSKI_GAME_DEV_TOOLKIT.md). Nothing from CCGS was imported.
+  - Decided after review: the toolkit target is Route A, Booski agent configurations (D27); CCGS is acknowledged when inspired features are built (D28); the studio uses Unity 6.3 LTS, with an upgrade expected later (D29). The toolkit's contents remain a proposal.
+- **Last completed milestone:** **PR3.0 — Booski Blueprint & Project Documentation**. Merged into `main` through PR #6 (merge commit `65755f1`); CI on `main` passed.
+- **Next milestone:** **PR3.2 — AI Core Foundation**. **Status: Planned.** Not approved, not started. It may start only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 - **What exists today:** a working, persistent, multi-user studio application (Booski Core plus the React interface). It is the **foundation for the future Booski Control Plane**, not the completed Control Plane architecture described in [ARCHITECTURE.md](ARCHITECTURE.md). It stores accounts, workspaces, roles, departments, projects, milestones, tasks, documents, decisions, approvals and activity. The repository also holds the project documentation (`CLAUDE.md` and `docs/`), which is the source of truth for the plan and process.
 - **What does not exist:** any AI functionality.
   - AI-related screens (command bar, AI workforce, agents, cost and usage, integrations) are **labelled previews**.
@@ -46,20 +48,21 @@ All PR2.x merges took place on 14 November 2026. Branch-level CI runs are listed
 
 These were true when checked. Re-check before relying on them.
 
-- **`main`:** `65755f1` "Merge pull request #6 …", the GitHub default branch.
-- **CI on `main` at `65755f1`:** run 43626588068 passed:
+- **`main`:** `2386866` "Merge pull request #7 …" (the PR3.0 status update), the GitHub default branch.
+- **CI on `main` at `2386866`:** run 43627251586 passed:
   - frontend lint, types, tests and build;
   - backend lint, types and tests (real PostgreSQL, PostgreSQL 18 client tools installed);
   - end-to-end (browser + API + PostgreSQL);
   - container smoke test.
-- **Pull requests:** PRs #1–#6 were merged. This status update is a follow-up docs-only PR from `phase-3/pr3.0-status-complete`.
+- **Pull requests:** PRs #1–#7 were merged. None open.
 - **Branches:**
   - `main`;
   - `phase-3/pr3.0-booski-blueprint`, merged through PR #6, still present on GitHub and locally;
-  - `phase-3/pr3.0-status-complete`, this follow-up status update;
+  - `phase-3/pr3.0-status-complete`, merged through PR #7, still present on GitHub and locally;
+  - `phase-3/pr3.1-ccgs-audit`, created from `2386866`; local only, holding the PR3.1 commits;
   - five merged `phase-2/*` branches, still present on GitHub and locally (PROP-2).
-- **Branch protection on `main`:** off (PROP-1).
-- **Test suites** (unchanged by PR3.0, which was documentation only):
+- **Branch protection on `main`:** **on** since 14 November 2026 (D25): the four CI jobs are required, force-pushes and deletion are blocked, and the rules apply to administrators.
+- **Test suites** (unchanged by PR3.0 and PR3.1, which are documentation only):
   - 574 backend tests (counted with `pytest --collect-only` at `a68d829`);
   - 51 frontend unit tests (from the last full Vitest run);
   - 14 end-to-end journeys;
@@ -67,7 +70,7 @@ These were true when checked. Re-check before relying on them.
 
 ## Outstanding reviews
 
-- None. This status update is the docs-only follow-up the human approved with the PR3.0 merge (D24); it is merged with a merge commit once its CI passes.
+- **PR3.1:** the audit and the proposed toolkit specification await the human's review. No push, PR or merge without explicit approval.
 
 ## Blockers
 
@@ -78,13 +81,12 @@ These were true when checked. Re-check before relying on them.
 
 | Question | Where it's tracked |
 |---|---|
-| Enable branch protection on `main`? | PROP-1, [DECISIONS.md](DECISIONS.md#prop-1--protect-main) |
 | Delete the five merged Phase 2 branches? | PROP-2, [DECISIONS.md](DECISIONS.md#prop-2--delete-merged-phase-2-branches) |
 | How and when is file storage built, and in which milestone? | [ROADMAP.md](ROADMAP.md#open-cross-cutting-requirements) |
 | Where does the integrations module go? | [ROADMAP.md](ROADMAP.md#open-cross-cutting-requirements) |
 | When are MFA or SSO, email invitations, scheduled backups, metrics export and multi-instance session cleanup built? | [ROADMAP.md](ROADMAP.md#open-cross-cutting-requirements) |
 | The proposed mapping of unbuilt Phase 2 plan items to Phase 3 milestones | [ROADMAP.md](ROADMAP.md#phase-2--platform-foundations--complete) |
-| Acceptance criteria for PR3.1–PR3.8 are proposed; confirm each when its milestone is planned | [ROADMAP.md](ROADMAP.md#phase-3--ai-core--workforce--in-progress) |
+| Acceptance criteria for PR3.2–PR3.8 are proposed; confirm each when its milestone is planned | [ROADMAP.md](ROADMAP.md#phase-3--ai-core--workforce--in-progress) |
 | Should the PR2.x implementation choices (D18–D20, D23) be confirmed as standing decisions? | [DECISIONS.md](DECISIONS.md) |
 | Historical gaps (see list below) | [DECISIONS.md](DECISIONS.md) |
 
@@ -98,6 +100,7 @@ These were true when checked. Re-check before relying on them.
 
 ## Next recommended action
 
-1. Confirm that CI on `main` passed after this status update was merged (`gh run list --branch main --limit 1`).
-2. Optionally decide PROP-1 and PROP-2.
-3. Only if the human asks: plan PR3.1. Review its objectives in ROADMAP.md, propose an approach and branch name, and agree acceptance criteria. PR3.1 starts only on explicit approval.
+1. The human reviews PR3.1: the [audit](audits/PR3.1-CCGS-AUDIT.md) and the [proposed toolkit specification](BOOSKI_GAME_DEV_TOOLKIT.md).
+2. If approved, and only with explicit approval for each step: push, open a PR to `main`, wait for CI, merge using the strategy the human approves, then mark PR3.1 **Complete** (a follow-up PR is needed, because `main` is protected).
+3. Optionally decide PROP-2 (the merged Phase 2 and PR3.0 branches remain).
+4. Only if the human asks: plan PR3.2 (AI Core Foundation). It starts only on explicit approval.

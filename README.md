@@ -12,6 +12,8 @@ React + TypeScript + Vite frontend for the Booski Studios operating system, conn
 | [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md) | Where the project is right now and what's next. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How it's built, and what's built versus planned. |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Product and architecture decisions, and open proposals. |
+| [docs/BOOSKI_GAME_DEV_TOOLKIT.md](docs/BOOSKI_GAME_DEV_TOOLKIT.md) | **Proposed** (not agreed) specification of the AI workforce's game-development toolkit, from PR3.1. |
+| [docs/audits/](docs/audits/) | Audits, starting with the PR3.1 audit of Claude Code Game Studios. |
 
 ## Run (development)
 

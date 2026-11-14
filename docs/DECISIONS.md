@@ -41,8 +41,16 @@
 | D22 | Phase 2 merged as stacked PRs with merge commits | Explicitly approved decision (Phase 2 only) | Completed |
 | D23 | Backups with PostgreSQL's own tools | Explicit requirement + implementation choice | Implemented |
 | D24 | PR3.0 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.0 only) | Completed |
+| D25 | Branch protection on `main` (PROP-1 accepted) | Explicitly approved decision | Implemented |
+| D26 | PR3.1 approved, with its scope decisions | Explicitly approved decision | In effect |
+| D27 | Toolkit target: Booski agent configurations (Route A) | Explicitly approved decision (accepts PROP-3) | Agreed; not built |
+| D28 | Acknowledge CCGS when CCGS-inspired features are built | Explicitly approved decision (resolves PROP-4) | Agreed; not yet due |
+| D29 | Unity 6.3 LTS is the studio's Unity version; upgrades expected | Explicitly approved decision | Agreed |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
-| PROP-1, PROP-2 | Protect `main`; delete the five merged Phase 2 branches | Proposal | Awaiting decision |
+| PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
+| PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
+| PROP-3 | Toolkit target: Booski agent configurations (Route A), repository pack derived | Proposal (from PR3.1) | Accepted as D27 |
+| PROP-4 | Acknowledge CCGS as an inspiration | Proposal (from PR3.1) | Decided as D28 |
 
 ---
 
@@ -267,6 +275,59 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Alternatives presented:** squash merge or rebase merge; for the status update, a direct commit to `main` or leaving it for a later session.
 - **Scope:** agreed for PR3.0 (and its follow-up status PR) only. Like D22, it is **not** a standing rule: each future merge strategy needs the human's approval.
 
+### D25 — Branch protection on `main`
+- **Category:** explicitly approved decision. Accepts PROP-1.
+- **Date:** 14 November 2026.
+- **Evidence:** after PR3.0 merged, Claude recommended doing PROP-1 first and then planning PR3.1; the human replied "Lets do it".
+- **Decision (as applied through the GitHub API):**
+  - The four CI jobs must pass before anything merges into `main`: "Frontend lint, types, tests and build", "Backend lint, types and tests", "End-to-end (browser + API + PostgreSQL)" and "Container smoke test".
+  - Force-pushes to `main` and deleting `main` are blocked.
+  - The rules apply to administrators too, so no one (including Claude through `gh`) can push unchecked commits directly to `main`. Changes reach `main` through pull requests.
+- **Implementation choices (not separately discussed):**
+  - Branches are **not** required to be up to date with `main` before merging.
+  - No pull-request review is required, because the human is the only reviewer.
+- **Consequence:** documentation updates to `main`, including status updates, also go through pull requests.
+- **Reversal:** the human can change these settings in GitHub (Settings → Branches) at any time; record any change here.
+
+### D26 — PR3.1 approved, with its scope decisions
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** Claude proposed the PR3.1 plan, acceptance criteria and branch name, with three questions. The human answered:
+  - "don't choose yet: make sure the audit looks at both and recommends one, and I'll decide then";
+  - "You suggestion is good";
+  - "put it on the PR3.1 branch as its first commit".
+- **Decision:**
+  - PR3.1 (Open-Source Capability Adoption Audit) proceeds on `phase-3/pr3.1-ccgs-audit`, documentation only, with the acceptance criteria recorded in ROADMAP.md.
+  - **Toolkit route:** the audit assesses both routes (Booski agent configurations; a curated `.claude/` toolkit for game repositories) and recommends one. **The human makes the choice afterwards** (see PROP-3).
+  - **Engines:** Unity specialists are reviewed in depth; Godot and Unreal are marked "not now" without detailed review; the browser-prototype route is assessed only for concepts worth borrowing.
+  - **Branch protection:** recorded as D25 in the first commit on the PR3.1 branch.
+- **Scope note:** approving PR3.1 doesn't approve any of the audit's recommendations, or any later milestone.
+
+### D27 — Toolkit target: Booski agent configurations (Route A)
+- **Category:** explicitly approved decision. Accepts PROP-3.
+- **Date:** 14 November 2026.
+- **Evidence:** after reviewing the PR3.1 audit, the human said "Route A sounds better".
+- **Decision:** the game-development toolkit takes the form of **Booski agent configurations and workflows**, run by Booski's orchestrator with server-side permissions, approvals and audit. Booski will generate a small `.claude/` guidance pack for each game repository from its own definitions (PR3.7), rather than installing CCGS's toolkit.
+- **Alternative not chosen:** Route B, a curated copy of CCGS's `.claude/` toolkit installed into game repositories.
+- **What it does not decide:** the toolkit's contents ([BOOSKI_GAME_DEV_TOOLKIT.md](BOOSKI_GAME_DEV_TOOLKIT.md)) remain a proposal; each part is confirmed when its milestone (PR3.2–PR3.8, Phases 4–7) is planned.
+
+### D28 — When to acknowledge CCGS
+- **Category:** explicitly approved decision. Resolves PROP-4.
+- **Date:** 14 November 2026.
+- **Evidence:** asked whether to add the acknowledgement now or with the first CCGS-inspired build, the human answered "When the features are built".
+- **Decision:** add an acknowledgements note crediting Claude Code Game Studios (MIT, Copyright (c) 2026 Donchitos) in the **same milestone that first builds a CCGS-inspired feature**. Any substantial reused text is recorded then in `THIRD_PARTY_NOTICES.md` with the full MIT text, source path and pinned commit.
+- **How to apply:** when planning PR3.2 or any later milestone, check whether it builds anything from the PR3.1 audit; if so, include the acknowledgement in that milestone's scope.
+
+### D29 — Unity version
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** the human: "Unity 6.3LTS but just be aware we'll want to be looking to update at some point."
+- **Decision:** the studio uses **Unity 6.3 LTS**. An upgrade is expected later.
+- **Consequences for design (to confirm when Phase 4 and PR3.7 are planned):**
+  - Treat the Unity version as a **per-project setting**, not a studio-wide constant, so a project can be upgraded deliberately and independently.
+  - Any Unity reference material or agent guidance is scoped to the version a project uses; an upgrade is a tracked change with its own review.
+  - Agents check the project's pinned version before using an engine API, and mark anything unverified.
+
 ---
 
 ## Phase 3 direction (D-P3-1 – D-P3-13)
@@ -309,12 +370,14 @@ Notes for later review. None of these is a decision.
 
 - **D2:** whether the Local Worker's long-poll endpoint should be async (PR3.6 design).
 - **D13:** whether to enable row-level security if multiple studios or external hosting raise the risk.
+- **D29:** when to upgrade beyond Unity 6.3 LTS, and how Booski supports a project's upgrade (a planned workflow, version-scoped guidance, re-running tests).
 
 ## Proposals — awaiting a decision
 
 These are recommendations only. **Do not act on them without explicit approval.**
 
 ### PROP-1 — Protect `main`
+- **Status:** **accepted** on 14 November 2026 and implemented; see D25. The proposal text below is kept as written.
 - **Category:** proposal.
 - **Proposal:** enable branch protection on `main`: require the four CI jobs (frontend, backend, end-to-end, container) to pass, and disallow force-pushes and branch deletion.
 - **Why:** `main` was unprotected when checked on 14 November 2026.
@@ -324,6 +387,20 @@ These are recommendations only. **Do not act on them without explicit approval.*
 - **Proposal:** delete the five merged branches `phase-2/pr1-frontend-foundations`, `phase-2/pr2.1-backend-foundation`, `phase-2/pr2.2-identity-access`, `phase-2/pr2.3-complete-backend-platform` and `phase-2/pr2.4-frontend-integration`, on GitHub and locally.
 - **Why:** all were fully merged into `main` through PRs #1–#5. Their commits remain in `main`'s history.
 - **Note:** the PR3.0 planning discussion referred to "six" merged branches. That was a miscount: there were five `phase-2/*` branches when checked on 14 November 2026. Re-check with `git branch -a --merged origin/main` before deleting.
+
+### PROP-3 — Toolkit target: Booski agent configurations
+- **Status:** **accepted** on 14 November 2026; see D27. The proposal text below is kept as written.
+- **Category:** proposal, from the PR3.1 audit ([audit §7](audits/PR3.1-CCGS-AUDIT.md#7-the-two-routes-assessment-and-recommendation)).
+- **Proposal:** the game-development toolkit takes the form of Booski agent configurations and workflows (Route A), run by Booski's orchestrator with server-side permissions and approvals. In PR3.7, Booski generates a small `.claude/` guidance pack for each game repository from its own definitions, rather than installing CCGS's toolkit.
+- **Alternative:** Route B, a curated copy of CCGS's `.claude/` toolkit installed into game repositories.
+- **Why:** consistent with D-P3-3, D-P3-4 and D-P3-6, covers every department, and avoids tracking a fast-moving fork. Route B is quicker to try but keeps logic and approvals outside Booski, and can't start before PR3.6–PR3.7.
+- **Decided by:** the human (D26).
+
+### PROP-4 — Acknowledge CCGS as an inspiration
+- **Status:** **decided** on 14 November 2026: acknowledge when the features are built; see D28. The proposal text below is kept as written.
+- **Category:** proposal, from the PR3.1 audit ([audit §8](audits/PR3.1-CCGS-AUDIT.md#8-licence-obligations)).
+- **Proposal:** add an acknowledgements note crediting Claude Code Game Studios (MIT, Copyright (c) 2026 Donchitos) as an inspiration for Booski's workforce design. Any substantial reused text goes into a `THIRD_PARTY_NOTICES.md` with the full MIT text, source path and pinned commit.
+- **Open point:** add the note now, or with the first CCGS-inspired build.
 
 ## Open questions (no decision yet)
 
