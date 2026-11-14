@@ -15,7 +15,8 @@
 - **Phase:** Phase 3 — AI Core & Workforce is in progress.
 - **Current approved milestone:** **PR3.1 — Open-Source Capability Adoption Audit**, approved 14 November 2026 (D26).
   - **Status: Awaiting review.** The audit and the proposed toolkit specification are written on `phase-3/pr3.1-ccgs-audit` and committed locally; at last verification the branch was not pushed and no PR was open.
-  - Deliverables: [audits/PR3.1-CCGS-AUDIT.md](audits/PR3.1-CCGS-AUDIT.md) and [BOOSKI_GAME_DEV_TOOLKIT.md](BOOSKI_GAME_DEV_TOOLKIT.md). Both are findings and **proposals**; nothing from CCGS was imported.
+  - Deliverables: [audits/PR3.1-CCGS-AUDIT.md](audits/PR3.1-CCGS-AUDIT.md) and [BOOSKI_GAME_DEV_TOOLKIT.md](BOOSKI_GAME_DEV_TOOLKIT.md). Nothing from CCGS was imported.
+  - Decided after review: the toolkit target is Route A, Booski agent configurations (D27); CCGS is acknowledged when inspired features are built (D28); the studio uses Unity 6.3 LTS, with an upgrade expected later (D29). The toolkit's contents remain a proposal.
 - **Last completed milestone:** **PR3.0 — Booski Blueprint & Project Documentation**. Merged into `main` through PR #6 (merge commit `65755f1`); CI on `main` passed.
 - **Next milestone:** **PR3.2 — AI Core Foundation**. **Status: Planned.** Not approved, not started. It may start only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 - **What exists today:** a working, persistent, multi-user studio application (Booski Core plus the React interface). It is the **foundation for the future Booski Control Plane**, not the completed Control Plane architecture described in [ARCHITECTURE.md](ARCHITECTURE.md). It stores accounts, workspaces, roles, departments, projects, milestones, tasks, documents, decisions, approvals and activity. The repository also holds the project documentation (`CLAUDE.md` and `docs/`), which is the source of truth for the plan and process.
@@ -85,9 +86,6 @@ These were true when checked. Re-check before relying on them.
 | Where does the integrations module go? | [ROADMAP.md](ROADMAP.md#open-cross-cutting-requirements) |
 | When are MFA or SSO, email invitations, scheduled backups, metrics export and multi-instance session cleanup built? | [ROADMAP.md](ROADMAP.md#open-cross-cutting-requirements) |
 | The proposed mapping of unbuilt Phase 2 plan items to Phase 3 milestones | [ROADMAP.md](ROADMAP.md#phase-2--platform-foundations--complete) |
-| Toolkit target: Route A (Booski agent configurations) or Route B (curated `.claude/` toolkit)? | PROP-3, [DECISIONS.md](DECISIONS.md#prop-3--toolkit-target-booski-agent-configurations) |
-| Acknowledge CCGS as an inspiration: now, or with the first CCGS-inspired build? | PROP-4, [DECISIONS.md](DECISIONS.md#prop-4--acknowledge-ccgs-as-an-inspiration) |
-| Which Unity version does the studio use? (Needed for Phase 4) | [audit §9](audits/PR3.1-CCGS-AUDIT.md#9-risks-and-open-questions) |
 | Acceptance criteria for PR3.2–PR3.8 are proposed; confirm each when its milestone is planned | [ROADMAP.md](ROADMAP.md#phase-3--ai-core--workforce--in-progress) |
 | Should the PR2.x implementation choices (D18–D20, D23) be confirmed as standing decisions? | [DECISIONS.md](DECISIONS.md) |
 | Historical gaps (see list below) | [DECISIONS.md](DECISIONS.md) |
@@ -103,7 +101,6 @@ These were true when checked. Re-check before relying on them.
 ## Next recommended action
 
 1. The human reviews PR3.1: the [audit](audits/PR3.1-CCGS-AUDIT.md) and the [proposed toolkit specification](BOOSKI_GAME_DEV_TOOLKIT.md).
-2. The human decides PROP-3 (toolkit route) and PROP-4 (acknowledgement); these can also wait until PR3.4 is planned.
-3. If approved, and only with explicit approval for each step: push, open a PR to `main`, wait for CI, merge using the strategy the human approves, then mark PR3.1 **Complete** (a follow-up PR is needed, because `main` is protected).
-4. Optionally decide PROP-2 (the merged Phase 2 and PR3.0 branches remain).
-5. Only if the human asks: plan PR3.2 (AI Core Foundation). It starts only on explicit approval.
+2. If approved, and only with explicit approval for each step: push, open a PR to `main`, wait for CI, merge using the strategy the human approves, then mark PR3.1 **Complete** (a follow-up PR is needed, because `main` is protected).
+3. Optionally decide PROP-2 (the merged Phase 2 and PR3.0 branches remain).
+4. Only if the human asks: plan PR3.2 (AI Core Foundation). It starts only on explicit approval.

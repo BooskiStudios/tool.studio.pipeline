@@ -368,10 +368,10 @@ As agreed when PR3.1 was approved, the audit assesses both routes and recommends
 - **Unverified engine claims:** CCGS's own testing covers the browser route; the Unity route isn't proven.
 - **Approval semantics:** CCGS lets AI directors approve stages, and lets orchestrated subagents write named files without a separate prompt. Booski must decide explicitly what an AI review may do on its own; by default it is advisory (D-P3-6).
 
-**Open questions for the human:**
-1. Route A or Route B (§7)?
-2. Should Booski add an acknowledgements note crediting CCGS now, or when the first CCGS-inspired item is built?
-3. Which Unity version does the studio use? This decides how any Unity reference is pinned (Phase 4).
+**Open questions for the human** (answers recorded after review, 14 November 2026):
+1. Route A or Route B (§7)? **Answered: Route A (D27).**
+2. Should Booski add an acknowledgements note crediting CCGS now, or when the first CCGS-inspired item is built? **Answered: when the features are built (D28).**
+3. Which Unity version does the studio use? This decides how any Unity reference is pinned (Phase 4). **Answered: Unity 6.3 LTS, with an upgrade expected later (D29).**
 4. Should CCGS's finer production stages change Booski's project statuses? That would be a schema change in a later milestone.
 
 ---
