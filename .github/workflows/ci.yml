@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   frontend:
-    name: Frontend build
+    name: Frontend lint, types, tests and build
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -22,7 +22,9 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run lint
       - run: npm run build # tsc -b + vite build
+      - run: npm test
 
   backend:
     name: Backend lint, types and tests
@@ -45,8 +47,17 @@ jobs:
     env:
       BOOSKI_TEST_DATABASE_URL: postgresql+psycopg://booski:ci-only-password@127.0.0.1:5432/booski_test
       BOOSKI_REQUIRE_DB: "1" # fail, don't skip, if the database tests can't run
+      BOOSKI_REQUIRE_PG_TOOLS: "1" # same for the backup tests (pg_dump / pg_restore)
+      BOOSKI_PG_BIN: /usr/lib/postgresql/18/bin
     steps:
       - uses: actions/checkout@v7
+      - name: Install the PostgreSQL 18 client tools (backup tests)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          /usr/lib/postgresql/18/bin/pg_dump --version
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "0.13.6"
@@ -56,6 +67,38 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy
       - run: uv run pytest -W error
+
+  e2e:
+    name: End-to-end (browser + API + PostgreSQL)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18.4-bookworm
+        env:
+          POSTGRES_USER: booski
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U booski -d postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      BOOSKI_E2E_DATABASE_URL: postgresql+psycopg://booski:ci-only-password@127.0.0.1:5432/booski_e2e
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.6"
+          enable-cache: true
+      - run: npm ci
+      - run: uv sync --locked --project backend
+      # Uses the runner's installed Google Chrome (playwright.config.ts: channel "chrome").
+      - run: npx playwright test
 
   container:
     name: Container smoke test
@@ -76,6 +119,17 @@ jobs:
             sleep 2
           done
           echo "API never became ready. Last response: $body"; exit 1
+      - name: The web app is served with security headers
+        run: |
+          set -eu
+          curl -fsS -D headers.txt -o index.html http://127.0.0.1:8000/projects/any-deep-link
+          grep -q '<div id="root">' index.html
+          grep -qi '^content-security-policy:.*frame-ancestors' headers.txt
+          grep -qi '^x-content-type-options: nosniff' headers.txt
+          if grep -qi '^server:' headers.txt; then echo "Server header present"; exit 1; fi
+          curl -fsS -D api-headers.txt -o /dev/null http://127.0.0.1:8000/api/v1/health/live
+          grep -qi '^cache-control: no-store' api-headers.txt
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/w/anything/projects)" = 401
       - name: Container logs
         if: always()
         run: docker compose logs --no-color

@@ -147,7 +147,7 @@ def create_document(db: Session, ctx: WorkspaceContext, body: DocumentCreate, me
         entity_type="document",
         entity_id=document.id,
         project_id=document.project_id,
-        summary=f"Created {document.kind} {document.title}",
+        summary=f"Created {document.kind.replace('_', ' ')} {document.title}",
     )
     db.flush()
     return document

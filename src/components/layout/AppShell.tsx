@@ -2,8 +2,8 @@ import { useCallback, useState } from "react";
 import { useLocation, useOutlet } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTasks } from "../../context/TasksContext";
-import { studioApi } from "../../services";
-import { Modal } from "../Modal";
+import { useWorkspace } from "../../workspace/WorkspaceProvider";
+import { ProjectFormModal } from "../projects/ProjectFormModal";
 import { TaskFormModal } from "../TaskFormModal";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -23,6 +23,7 @@ function FrozenOutlet() {
 export function AppShell() {
   const location = useLocation();
   const { isTaskFormOpen } = useTasks();
+  const { name } = useWorkspace();
   const [showProjectModal, setShowProjectModal] = useState(false);
   const closeProjectModal = useCallback(() => setShowProjectModal(false), []);
 
@@ -45,19 +46,11 @@ export function AppShell() {
         </AnimatePresence>
 
         {isTaskFormOpen && <TaskFormModal />}
-        {showProjectModal && (
-          <Modal
-            title="New project"
-            description="Project creation will be connected to the persistent backend in a later phase."
-            onClose={closeProjectModal}
-          >
-            <button type="button" className="primary-btn" data-autofocus onClick={closeProjectModal}>Got it</button>
-          </Modal>
-        )}
+        {showProjectModal && <ProjectFormModal onClose={closeProjectModal} />}
 
         <footer>
-          BOOSKI STUDIOS <span>•</span> FRONTEND FOUNDATION V0.8 <span>•</span>{" "}
-          {studioApi.mode === "demo" ? "DEMO DATA — NOT CONNECTED TO LIVE SYSTEMS" : "CONNECTED TO BOOSKI CORE"}
+          BOOSKI STUDIOS <span>•</span> STUDIO OS V0.9 <span>•</span> CONNECTED TO BOOSKI CORE <span>•</span> {name.toUpperCase()}
+          <span>•</span> AI FEATURES ARE PREVIEWS UNTIL PHASE 3
         </footer>
       </main>
     </div>

@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Bell, Code2, Gauge, ListTodo, Search, Send, Settings, Sparkles, WandSparkles, X, type LucideIcon } from "lucide-react";
+import { useApprovalList } from "../../api/hooks";
+import { useMe } from "../../auth/AuthProvider";
 import { useToast } from "../../context/ToastContext";
 import { paths } from "../../routes";
 
@@ -15,11 +17,16 @@ const quickActions: { label: string; prefix: string; icon: LucideIcon }[] = [
 /**
  * AI command bar and top-right actions.
  *
- * DEMO BEHAVIOUR: commands are captured and echoed back, but not sent anywhere.
+ * PREVIEW: the AI command bar arrives with AI orchestration (Phase 3). Commands are echoed back here
+ * and not sent anywhere. Notifications show approval requests waiting for you (live).
  */
 export function Topbar() {
   const navigate = useNavigate();
   const notify = useToast();
+  const me = useMe();
+  const pending = useApprovalList({ status: ["pending"], limit: 50 });
+  const waiting = pending.items.filter((a) => a.can_decide).length;
+  const initials = me.user.display_name.split(/s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase();
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverId = useId();
   const [command, setCommand] = useState("");
@@ -37,7 +44,7 @@ export function Topbar() {
     const text = command.trim();
     if (!text) return;
     setLastCommand(text);
-    notify("Demo mode: command captured. AI execution will be connected in a later phase.");
+    notify("Preview: the AI command bar arrives with AI orchestration in Phase 3. Nothing was sent.");
     setCommand("");
   };
 
@@ -57,8 +64,8 @@ export function Topbar() {
               value={command}
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submit()}
-              placeholder="Ask Booski anything or give it a task..."
-              aria-label="Ask Booski anything or give it a task"
+              placeholder="Ask Booski anything or give it a task... (AI arrives in Phase 3)"
+              aria-label="Ask Booski anything or give it a task (preview: AI arrives in Phase 3)"
             />
             <button type="button" className="send-button" onClick={submit} aria-label="Send command">
               <Send size={20} aria-hidden="true" />
@@ -77,29 +84,36 @@ export function Topbar() {
             type="button"
             className="icon-button"
             onClick={() => setShowNotifications((open) => !open)}
-            aria-label="Notifications"
+            aria-label={waiting ? `Notifications: ${waiting} approval requests waiting for you` : "Notifications"}
             aria-expanded={showNotifications}
             aria-controls={popoverId}
           >
             <Bell size={19} aria-hidden="true" />
-            <i aria-hidden="true" />
+            {waiting > 0 && <i aria-hidden="true" />}
           </button>
           <button type="button" className="icon-button" onClick={() => navigate(paths.settings)} aria-label="Settings">
             <Settings size={19} aria-hidden="true" />
           </button>
-          <div className="mini-avatar" aria-hidden="true">♛</div>
+          <div className="mini-avatar" aria-hidden="true">{initials || "♛"}</div>
           {showNotifications && (
             <div className="notification-pop" id={popoverId} role="region" aria-label="Notifications">
               <b>Notifications</b>
-              <p>No new notifications.</p>
-              <small>Demo interface</small>
+              {waiting > 0 ? (
+                <p>
+                  <button type="button" className="inline-link" onClick={() => { setShowNotifications(false); navigate(paths.approvals); }}>
+                    {waiting} approval {waiting === 1 ? "request is" : "requests are"} waiting for your review
+                  </button>
+                </p>
+              ) : (
+                <p>Nothing is waiting for you.</p>
+              )}
             </div>
           )}
         </div>
       </header>
       {lastCommand && (
         <div className="last-command">
-          <Sparkles size={15} aria-hidden="true" /> Last demo command: <b>{lastCommand}</b>
+          <Sparkles size={15} aria-hidden="true" /> Preview only, not sent: <b>{lastCommand}</b>
           <button type="button" onClick={() => setLastCommand("")} aria-label="Dismiss last command">
             <X size={14} aria-hidden="true" />
           </button>

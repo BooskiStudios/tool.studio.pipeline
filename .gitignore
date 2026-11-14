@@ -11,3 +11,10 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# End-to-end test output
+test-results/
+playwright-report/
+
+# Database backups (keep them outside the repository; `booski backup` defaults to backend/var/backups)
+*.dump

@@ -1,6 +1,6 @@
 """The ``booski`` command: run the API, manage the database schema and provision accounts.
 
-Later phases add ``seed-demo``, ``backup`` and ``restore-check`` here.
+``booski backup`` creates, verifies and restores database backups (see backend/DEPLOYMENT.md).
 """
 
 import argparse
@@ -26,18 +26,24 @@ def _is_loopback(host: str) -> bool:
 
 
 def _serve(args: argparse.Namespace) -> int:
-    # Until authentication exists (PR 2.2) the API must not be reachable from other machines.
+    # Exposing the API to a network needs HTTPS in front of it (the session cookie is Secure-only) and a
+    # reviewed deployment, so by default it only listens on this machine. See backend/DEPLOYMENT.md.
     if not _is_loopback(args.host) and not args.allow_non_loopback:
         print(
-            f"Refusing to listen on {args.host}: Booski Core has no authentication yet, so it only listens "
-            "on this machine. Inside a container, pass --allow-non-loopback and publish the port to "
-            "127.0.0.1 only (docker-compose.yml already does this).",
+            f"Refusing to listen on {args.host}: Booski Core only listens on this machine unless it runs "
+            "behind an HTTPS reverse proxy (see backend/DEPLOYMENT.md). Inside a container, pass "
+            "--allow-non-loopback and publish the port to 127.0.0.1 only (docker-compose.yml does this).",
             file=sys.stderr,
         )
         return 2
 
     import uvicorn
 
+    settings = get_settings()  # validates the configuration before the server starts
+    proxies = settings.trusted_proxies
+    level = settings.log_level.upper()
+    # Timestamped application logs (errors include the request id that users see in error messages).
+    logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     uvicorn.run(
         "booski_core.main:create_app",
         factory=True,
@@ -45,7 +51,13 @@ def _serve(args: argparse.Namespace) -> int:
         port=args.port,
         reload=args.reload,
         reload_dirs=[str(Path(__file__).parent)] if args.reload else None,
-        proxy_headers=False,
+        # Forwarded headers (client IP, https) are believed only from the configured reverse proxies;
+        # otherwise any client could claim another IP address and dodge the per-IP sign-in limits.
+        proxy_headers=bool(proxies),
+        forwarded_allow_ips=",".join(proxies) if proxies else None,
+        server_header=False,  # don't advertise the server software
+        log_level=level.lower(),
+        timeout_graceful_shutdown=10,  # let in-flight requests finish on stop (SIGTERM / Ctrl+C)
     )
     return 0
 
@@ -131,6 +143,40 @@ def _devdb(args: argparse.Namespace) -> int:
     return 0
 
 
+def _backup(args: argparse.Namespace) -> int:
+    from booski_core import backup
+
+    settings = get_settings()
+    url = settings.sqlalchemy_url
+    try:
+        if args.backup_command == "create":
+            result = backup.create_backup(url, args.dir or settings.backup_dir)
+            rows = sum(result.snapshot.tables.values())
+            print(f"Backup written: {result.dump}")
+            print(f"Manifest:       {result.manifest}")
+            print(
+                f"Contains {len(result.snapshot.tables)} tables and {rows} rows "
+                f"(migration {result.snapshot.alembic_revision})."
+            )
+        elif args.backup_command == "verify":
+            verified = backup.verify_backup(args.file, url)
+            print(
+                f"Verified {args.file.name}: restored into a scratch database and matched the manifest "
+                f"({verified.tables} tables, {verified.rows} rows, migration {verified.alembic_revision})."
+            )
+        elif args.backup_command == "restore":
+            restored = backup.restore_backup(args.file, url, args.target_database)
+            target = args.target_database or "the configured database"
+            print(
+                f"Restored {args.file.name} into {target}: "
+                f"{sum(restored.tables.values())} rows, checked against the manifest."
+            )
+    except backup.BackupError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="booski", description="Booski Core command-line tools.")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -200,6 +246,24 @@ def build_parser() -> argparse.ArgumentParser:
     devdb_commands.add_parser("stop", help="Stop the local PostgreSQL.")
     devdb_commands.add_parser("status", help="Show whether the local PostgreSQL is installed and running.")
     devdb_parser.set_defaults(handler=_devdb)
+
+    backup_parser = commands.add_parser("backup", help="Back up, verify and restore the database (pg_dump).")
+    backup_commands = backup_parser.add_subparsers(dest="backup_command", required=True)
+    create = backup_commands.add_parser("create", help="Write a backup and its manifest.")
+    create.add_argument("--dir", type=Path, help="Output folder (default: BOOSKI_BACKUP_DIR, var/backups).")
+    verify = backup_commands.add_parser(
+        "verify", help="Restore a backup into a throwaway database and check it against its manifest."
+    )
+    verify.add_argument("file", type=Path, help="The .dump file (its .json manifest must sit next to it).")
+    restore = backup_commands.add_parser(
+        "restore", help="Restore a backup into an empty database on the configured server."
+    )
+    restore.add_argument("file", type=Path, help="The .dump file (its .json manifest must sit next to it).")
+    restore.add_argument(
+        "--target-database",
+        help="Name of an existing, empty database on the same server (default: the configured one).",
+    )
+    backup_parser.set_defaults(handler=_backup)
 
     return parser
 

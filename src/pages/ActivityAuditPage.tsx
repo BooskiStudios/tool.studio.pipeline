@@ -1,35 +1,69 @@
-import { Clock3 } from "lucide-react";
-import { PageHeading, ResourceView } from "../components/common";
-import { useResource } from "../hooks/useResource";
-import { studioApi } from "../services";
+import { useState } from "react";
+import { useActivity, useMembers, useProjectList } from "../api/hooks";
+import { ActivityList, entityLabel } from "../components/ActivityList";
+import { PageHeading } from "../components/common";
+import { LoadMore, QueryView, RefreshingHint } from "../components/ui";
+import { useWorkspace } from "../workspace/WorkspaceProvider";
 
-/** `/activity` — chronological agent activity and audit trail (illustrative). */
+const ENTITY_TYPES = ["project", "task", "milestone", "workstream", "document", "decision", "approval", "department", "membership", "workspace"];
+
+/** `/activity` — the workspace's permanent activity record, newest first. */
 export function ActivityAuditPage() {
-  const events = useResource(() => studioApi.listAuditEvents(), []);
+  const { can } = useWorkspace();
+  const projects = useProjectList();
+  const members = useMembers();
+  const [project, setProject] = useState("");
+  const [entityType, setEntityType] = useState("");
+  const [actor, setActor] = useState("");
+  const [since, setSince] = useState("");
+  const activity = useActivity({
+    project: project || undefined,
+    entity_type: entityType || undefined,
+    actor: actor || undefined,
+    since: since ? new Date(`${since}T00:00:00`).toISOString() : undefined,
+  });
+  const types = can("audit.read") ? [...ENTITY_TYPES, "invitation"] : ENTITY_TYPES;
+
   return (
     <div className="workspace-page">
       <PageHeading
-        eyebrow="BOOSKI AI CORE / TRACEABILITY"
+        eyebrow="BOOSKI STUDIOS / TRACEABILITY"
         title="Activity & Audit"
-        description="A chronological record of agent activity, task changes, file operations and approvals. This is the foundation for investigating and recovering from problems."
+        description="A permanent, append-only record of who changed what and when. Entries can't be edited or deleted."
+        source="live"
       />
       <div className="panel audit-list">
-        <ResourceView resource={events} label="activity">
-          {(rows) =>
-            rows.map((e) => (
-              <div className="audit-row" key={e.id}>
-                <span className="audit-mark"><Clock3 size={16} aria-hidden="true" /></span>
-                <div>
-                  <b>{e.action}</b>
-                  <small>{e.agent} · {e.department}</small>
-                </div>
-                <time>{e.time}</time>
-              </div>
-            ))
-          }
-        </ResourceView>
+        <div className="filter-bar" role="search" aria-label="Filter activity">
+          <select value={project} onChange={(e) => setProject(e.target.value)} aria-label="Project">
+            <option value="">All projects</option>
+            {(projects.data ?? []).map((p) => <option key={p.id} value={p.slug}>{p.name}</option>)}
+          </select>
+          <select value={entityType} onChange={(e) => setEntityType(e.target.value)} aria-label="Record type">
+            <option value="">All record types</option>
+            {types.map((t) => <option key={t} value={t}>{entityLabel(t)}</option>)}
+          </select>
+          <select value={actor} onChange={(e) => setActor(e.target.value)} aria-label="Person">
+            <option value="">Everyone</option>
+            {(members.data ?? []).map((m) => <option key={m.user_id} value={m.user_id}>{m.display_name}</option>)}
+          </select>
+          <label className="check-label">
+            Since <input type="date" value={since} onChange={(e) => setSince(e.target.value)} aria-label="Since date" />
+          </label>
+          <RefreshingHint active={activity.isFetching && !activity.isPending && !activity.isFetchingNextPage} />
+        </div>
+        <QueryView query={activity} label="activity">
+          {() => (
+            <>
+              <ActivityList events={activity.items} emptyText="No activity matches these filters." />
+              <LoadMore {...activity} />
+            </>
+          )}
+        </QueryView>
       </div>
-      <p className="small-note">Illustrative records only. Live audit events will be written by Booski Core and retained according to configurable policies.</p>
+      <p className="small-note">
+        You see activity for the projects you can access. Restricted projects' history is only shown to their members, owners and admins
+        {can("audit.read") ? "" : "; invitation records are visible to owners and admins"}.
+      </p>
     </div>
   );
 }

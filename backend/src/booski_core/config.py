@@ -3,8 +3,11 @@
 from datetime import timedelta
 from enum import StrEnum
 from functools import lru_cache
+from pathlib import Path
+from typing import Self
+from urllib.parse import urlsplit
 
-from pydantic import Field, PostgresDsn
+from pydantic import Field, PostgresDsn, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -54,6 +57,44 @@ class Settings(BaseSettings):
         ],
         description="Origins allowed to make state-changing browser requests (JSON list in env).",
     )
+
+    # --- Serving the web app ----------------------------------------------------------------------
+    frontend_dist: Path | None = Field(
+        default=None,
+        description="Folder holding the built frontend (npm run build → dist/). When set, the API also "
+        "serves the web app, so browser and API share one origin. Unset in development (Vite serves it).",
+    )
+
+    # --- Reverse proxy ----------------------------------------------------------------------------
+    trusted_proxies: list[str] = Field(
+        default=[],
+        description="IP addresses of reverse proxies whose X-Forwarded-For / X-Forwarded-Proto headers are "
+        "believed (JSON list in env). Empty: forwarded headers are ignored, so clients can't fake their IP.",
+    )
+
+    # --- Backups ----------------------------------------------------------------------------------
+    backup_dir: Path = Field(
+        default=Path("var/backups"),
+        description="Where `booski backup create` writes backups (relative to the working directory). "
+        "Keep it outside the repository or in a git-ignored folder; backups contain all studio data.",
+    )
+
+    @model_validator(mode="after")
+    def _check_production(self) -> Self:
+        """Refuse to start in production with settings that only make sense on a developer's machine."""
+        if self.environment is not Environment.PRODUCTION:
+            return self
+        problems = []
+        if not self.allowed_origins:
+            problems.append("BOOSKI_ALLOWED_ORIGINS must list the public https:// address of the app")
+        insecure = [origin for origin in self.allowed_origins if urlsplit(origin).scheme != "https"]
+        if insecure:
+            problems.append(f"BOOSKI_ALLOWED_ORIGINS must only list https:// origins (not {insecure})")
+        if not self.database_url.hosts()[0].get("password"):
+            problems.append("BOOSKI_DATABASE_URL must include a password")
+        if problems:
+            raise ValueError("Unsafe production configuration: " + "; ".join(problems) + ".")
+        return self
 
     @property
     def is_production(self) -> bool:

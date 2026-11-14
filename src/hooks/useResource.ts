@@ -26,6 +26,7 @@ export function useResource<T>(load: () => Promise<T>, deps: DependencyList): Re
       current = false;
     };
     // `load` is intentionally excluded: callers pass an inline closure and declare its inputs in `deps`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return resource;

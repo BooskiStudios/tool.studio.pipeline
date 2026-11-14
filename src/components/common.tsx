@@ -1,20 +1,28 @@
 import type { ReactNode } from "react";
 import { Search, type LucideIcon } from "lucide-react";
 import type { Resource } from "../hooks/useResource";
+import { SourceChip } from "./ui";
 
-/** Standard heading for studio-system pages, with the demo-data chip. */
-export function PageHeading({ eyebrow, title, description, demoChip = true }: {
+/**
+ * Standard heading for studio pages. `source` says where the page's data comes from: Booski Core
+ * (`live`), or illustrative preview content for a capability planned for a later phase (`planned`).
+ */
+export function PageHeading({ eyebrow, title, description, source, actions }: {
   eyebrow: string;
   title: string;
   description: string;
-  demoChip?: boolean;
+  source: "live" | "planned";
+  actions?: ReactNode;
 }) {
   return (
-    <div className="simple-page-heading">
-      <span className="eyebrow">{eyebrow}</span>
-      <h1>{title}</h1>
-      <p>{description}</p>
-      {demoChip && <span className="demo-chip">DEMO DATA · NOT CONNECTED TO LIVE SERVICES</span>}
+    <div className="simple-page-heading page-heading-row">
+      <div>
+        <span className="eyebrow">{eyebrow}</span>
+        <h1>{title}</h1>
+        <p>{description}</p>
+        <SourceChip source={source} />
+      </div>
+      {actions && <div className="page-heading-actions">{actions}</div>}
     </div>
   );
 }

@@ -21,6 +21,7 @@ export function CostUsagePage() {
         eyebrow="BOOSKI AI CORE / FINANCIALS"
         title="Cost & Usage"
         description="Understand AI consumption and operating costs across providers, agents, workflows and projects."
+        source="planned"
       />
       <div className="demo-chart-note">
         <span className="demo-label">ILLUSTRATIVE DATA</span> Charts demonstrate the intended reporting layout; they are not actual provider charges or usage.

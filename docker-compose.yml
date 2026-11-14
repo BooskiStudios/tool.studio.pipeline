@@ -1,10 +1,10 @@
-# Booski Core in containers: PostgreSQL 18 + migrations + API.
+# Booski Studios in containers: PostgreSQL 18 + migrations + the API, which also serves the web app.
 # Optional for development (see backend/README.md); CI uses it to prove the container path works,
-# and it is the starting point for hosting on a studio server or in the cloud.
+# and it is the starting point for hosting on a studio server or in the cloud (backend/DEPLOYMENT.md).
 #
 #   cp .env.example .env    # then set BOOSKI_DB_PASSWORD
 #   docker compose up --build
-#   → http://127.0.0.1:8000/api/v1/health/ready
+#   → http://127.0.0.1:8000/  (the app)   http://127.0.0.1:8000/api/v1/health/ready  (readiness)
 
 name: booski
 
@@ -27,7 +27,9 @@ services:
     # No published port: only the other containers can reach the database.
 
   migrate:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     command: ["booski", "db", "upgrade"]
     environment:
       BOOSKI_DATABASE_URL: *database-url
@@ -37,16 +39,19 @@ services:
     restart: "no"
 
   api:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       BOOSKI_DATABASE_URL: *database-url
       BOOSKI_ENVIRONMENT: ${BOOSKI_ENVIRONMENT:-development}
     ports:
-      - "127.0.0.1:8000:8000" # this machine only, until authentication exists (PR 2.2)
+      - "127.0.0.1:8000:8000" # this machine only; put an HTTPS reverse proxy in front before exposing it
     depends_on:
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
+    stop_grace_period: 15s # in-flight requests finish before the container stops
 
 volumes:
   pgdata:

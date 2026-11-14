@@ -9,6 +9,8 @@ interface ModalProps {
   /** Must be stable (e.g. from useCallback or a state setter) to avoid re-running focus setup. */
   onClose: () => void;
   children?: ReactNode;
+  /** "wide" for detail views and longer forms. */
+  size?: "normal" | "wide";
 }
 
 /**
@@ -16,7 +18,7 @@ interface ModalProps {
  * or backdrop click, and restores focus when closed. Mark the element that
  * should receive initial focus with `data-autofocus`.
  */
-export function Modal({ title, eyebrow, description, onClose, children }: ModalProps) {
+export function Modal({ title, eyebrow, description, onClose, children, size = "normal" }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -31,7 +33,7 @@ export function Modal({ title, eyebrow, description, onClose, children }: ModalP
     >
       <div
         ref={dialogRef}
-        className="modal"
+        className={size === "wide" ? "modal modal-wide" : "modal"}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

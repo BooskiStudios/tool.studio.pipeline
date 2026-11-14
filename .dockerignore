@@ -1,0 +1,18 @@
+# The image is built from the repository root (backend/Dockerfile). Send only what it needs:
+# never local databases, secrets, virtual environments or build output.
+**/.env
+**/.env.*
+!backend/.env.example
+backend/var/
+backend/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+node_modules/
+dist/
+test-results/
+playwright-report/
+.git/
+.github/
+*.dump
