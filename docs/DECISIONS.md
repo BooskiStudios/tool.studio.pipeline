@@ -42,9 +42,12 @@
 | D23 | Backups with PostgreSQL's own tools | Explicit requirement + implementation choice | Implemented |
 | D24 | PR3.0 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.0 only) | Completed |
 | D25 | Branch protection on `main` (PROP-1 accepted) | Explicitly approved decision | Implemented |
+| D26 | PR3.1 approved, with its scope decisions | Explicitly approved decision | In effect |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
+| PROP-3 | Toolkit target: Booski agent configurations (Route A), repository pack derived | Proposal (from PR3.1) | Awaiting decision |
+| PROP-4 | Acknowledge CCGS as an inspiration | Proposal (from PR3.1) | Awaiting decision |
 
 ---
 
@@ -283,6 +286,20 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Consequence:** documentation updates to `main`, including status updates, also go through pull requests.
 - **Reversal:** the human can change these settings in GitHub (Settings → Branches) at any time; record any change here.
 
+### D26 — PR3.1 approved, with its scope decisions
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** Claude proposed the PR3.1 plan, acceptance criteria and branch name, with three questions. The human answered:
+  - "don't choose yet: make sure the audit looks at both and recommends one, and I'll decide then";
+  - "You suggestion is good";
+  - "put it on the PR3.1 branch as its first commit".
+- **Decision:**
+  - PR3.1 (Open-Source Capability Adoption Audit) proceeds on `phase-3/pr3.1-ccgs-audit`, documentation only, with the acceptance criteria recorded in ROADMAP.md.
+  - **Toolkit route:** the audit assesses both routes (Booski agent configurations; a curated `.claude/` toolkit for game repositories) and recommends one. **The human makes the choice afterwards** (see PROP-3).
+  - **Engines:** Unity specialists are reviewed in depth; Godot and Unreal are marked "not now" without detailed review; the browser-prototype route is assessed only for concepts worth borrowing.
+  - **Branch protection:** recorded as D25 in the first commit on the PR3.1 branch.
+- **Scope note:** approving PR3.1 doesn't approve any of the audit's recommendations, or any later milestone.
+
 ---
 
 ## Phase 3 direction (D-P3-1 – D-P3-13)
@@ -341,6 +358,18 @@ These are recommendations only. **Do not act on them without explicit approval.*
 - **Proposal:** delete the five merged branches `phase-2/pr1-frontend-foundations`, `phase-2/pr2.1-backend-foundation`, `phase-2/pr2.2-identity-access`, `phase-2/pr2.3-complete-backend-platform` and `phase-2/pr2.4-frontend-integration`, on GitHub and locally.
 - **Why:** all were fully merged into `main` through PRs #1–#5. Their commits remain in `main`'s history.
 - **Note:** the PR3.0 planning discussion referred to "six" merged branches. That was a miscount: there were five `phase-2/*` branches when checked on 14 November 2026. Re-check with `git branch -a --merged origin/main` before deleting.
+
+### PROP-3 — Toolkit target: Booski agent configurations
+- **Category:** proposal, from the PR3.1 audit ([audit §7](audits/PR3.1-CCGS-AUDIT.md#7-the-two-routes-assessment-and-recommendation)).
+- **Proposal:** the game-development toolkit takes the form of Booski agent configurations and workflows (Route A), run by Booski's orchestrator with server-side permissions and approvals. In PR3.7, Booski generates a small `.claude/` guidance pack for each game repository from its own definitions, rather than installing CCGS's toolkit.
+- **Alternative:** Route B, a curated copy of CCGS's `.claude/` toolkit installed into game repositories.
+- **Why:** consistent with D-P3-3, D-P3-4 and D-P3-6, covers every department, and avoids tracking a fast-moving fork. Route B is quicker to try but keeps logic and approvals outside Booski, and can't start before PR3.6–PR3.7.
+- **Decided by:** the human (D26).
+
+### PROP-4 — Acknowledge CCGS as an inspiration
+- **Category:** proposal, from the PR3.1 audit ([audit §8](audits/PR3.1-CCGS-AUDIT.md#8-licence-obligations)).
+- **Proposal:** add an acknowledgements note crediting Claude Code Game Studios (MIT, Copyright (c) 2026 Donchitos) as an inspiration for Booski's workforce design. Any substantial reused text goes into a `THIRD_PARTY_NOTICES.md` with the full MIT text, source path and pinned commit.
+- **Open point:** add the note now, or with the first CCGS-inspired build.
 
 ## Open questions (no decision yet)
 

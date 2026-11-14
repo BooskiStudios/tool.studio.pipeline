@@ -129,6 +129,8 @@ Planned layers, in roadmap order:
 | Tools and execution | PR3.5 | Tool registry with schemas; permission-aware execution scoped to workspace and project; approval requirements; sandboxing, timeouts and limits; destructive-action protection. Starts with knowledge retrieval and existing platform capabilities. |
 | Command Centre and AI Workforce | PR3.8 | Connects the existing interface: command bar, workforce dashboard, live progress, approvals, usage and cost, errors and human controls. |
 
+**Proposed input, not agreed:** PR3.1 produced a [proposed game-development toolkit specification](BOOSKI_GAME_DEV_TOOLKIT.md): agent definition fields, an initial roster, workflows, review verdicts and guardrails. It is based on the [CCGS audit](audits/PR3.1-CCGS-AUDIT.md). It is an input to the PR3.2–PR3.8 designs, not a design that has been approved or built.
+
 **Planned principles for every layer.** These come from the PR3.0 brief and the Phase 2 plan's text; they are to be confirmed in each milestone's design:
 - AI acts with the permissions of the user who started it, and never with more.
 - Future agents get no privileged path. The existing permission tests establish the user-permission behaviour that future agents must inherit: a request made with a viewer's session is refused for anything a viewer can't do (`backend/tests/test_studio_tasks.py`). No agent framework exists yet.
