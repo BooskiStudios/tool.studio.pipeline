@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Self
 from urllib.parse import urlsplit
 
-from pydantic import Field, PostgresDsn, model_validator
+from pydantic import Field, PostgresDsn, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -77,6 +77,20 @@ class Settings(BaseSettings):
         default=Path("var/backups"),
         description="Where `booski backup create` writes backups (relative to the working directory). "
         "Keep it outside the repository or in a git-ignored folder; backups contain all studio data.",
+    )
+
+    # --- AI providers (PR 3.2) ---------------------------------------------------------------------
+    anthropic_api_key: SecretStr | None = Field(
+        default=None,
+        description="Anthropic API key for the whole server (D32). Unset: no AI provider is configured and "
+        "every AI request is blocked. Set it in backend/.env (git-ignored) or the environment; "
+        "never commit it.",
+    )
+    ai_request_timeout_seconds: float = Field(
+        default=120, ge=5, le=600, description="Time limit for each attempt of an AI provider request."
+    )
+    ai_max_retries: int = Field(
+        default=2, ge=0, le=5, description="Retries for rate limits, overload, server and connection errors."
     )
 
     @model_validator(mode="after")

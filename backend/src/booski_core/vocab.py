@@ -22,6 +22,13 @@ ApprovalKind = Literal[
 ApprovalStatus = Literal["pending", "changes_requested", "approved", "rejected", "cancelled"]
 ApprovalAction = Literal["approved", "rejected", "changes_requested", "commented", "resubmitted", "cancelled"]
 ApprovalSubjectType = Literal["task", "document", "decision", "milestone", "project"]
+# AI Core (PR 3.2)
+AiProviderKey = Literal["anthropic"]
+AiTier = Literal["routine", "standard", "deep"]
+AiEffort = Literal["low", "medium", "high", "xhigh", "max"]
+# blocked: refused by Booski before calling a provider (AI off, budget reached, no provider configured).
+# refused: the model declined the request. failed: the provider call errored or timed out.
+AiRequestStatus = Literal["succeeded", "refused", "failed", "blocked"]
 
 
 def values(literal: object) -> tuple[str, ...]:

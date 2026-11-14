@@ -69,7 +69,7 @@ def test_backup_writes_a_dump_and_a_manifest_without_credentials(
     manifest_text = result.manifest.read_text(encoding="utf-8")
     manifest = json.loads(manifest_text)
     assert manifest["format"] == "booski-backup/1"
-    assert manifest["alembic_revision"] == "0003"
+    assert manifest["alembic_revision"] == "0004"
     assert manifest["tables"]["tasks"] >= 1 and manifest["tables"]["users"] >= 5
     assert manifest["size_bytes"] == result.dump.stat().st_size
     url = make_url(test_database_url)
@@ -84,7 +84,7 @@ def test_verify_restores_into_a_scratch_database_and_drops_it(
     result = backup.create_backup(test_database_url, tmp_path)
     verified = backup.verify_backup(result.dump, test_database_url)
     assert verified.rows == sum(result.snapshot.tables.values())
-    assert verified.alembic_revision == "0003"
+    assert verified.alembic_revision == "0004"
     assert not any("_restore_check_" in name for name in _databases(test_database_url))
 
 
@@ -106,6 +106,7 @@ def test_restore_into_an_empty_database_reproduces_the_data(
         "activity_events_append_only",
         "document_revisions_append_only",
         "approval_reviews_append_only",
+        "ai_requests_append_only",
     }
 
 

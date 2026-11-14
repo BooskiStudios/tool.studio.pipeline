@@ -12,7 +12,7 @@ const DEVELOP: Capability[] = [
 ];
 const ADMINISTER: Capability[] = [
   "workspace.update", "members.manage", "invitations.manage", "departments.manage", "projects.manage", "approvals.decide",
-  "audit.read",
+  "audit.read", "ai.use", "ai.manage", "ai.usage.read",
 ];
 
 export const ROLE_CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {

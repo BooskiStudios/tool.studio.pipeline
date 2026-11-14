@@ -22,7 +22,7 @@ A planned or proposed item is **never** an approved task. Only the human moves a
 |---|---|---|
 | 1 | Frontend prototype | **Complete** |
 | 2 | Platform foundations (PR1, PR2.1–PR2.4) | **Complete** |
-| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0 and PR3.1 are complete. No milestone is currently approved; PR3.2–PR3.8 are planned and not authorised. |
+| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0 and PR3.1 are complete. PR3.2 is approved and awaiting review. PR3.3–PR3.8 are planned and not authorised. |
 | 4 | Game Development Intelligence | Planned (strategic) |
 | 5 | Concept Lab & Asset Production | Planned (strategic) |
 | 6 | Marketing Studio & Studio Operations | Planned (strategic) |
@@ -59,7 +59,7 @@ The original Phase 2 plan described PR2.1–PR2.6, but Phase 2 was delivered as 
 
 **Goal:** build the shared AI infrastructure: providers, memory, agents, tools, the Local Worker and Claude Code execution. Bring it into the existing interface.
 
-> **Phase 3 being "in progress" authorises only the milestones the human has explicitly approved:** PR3.0 and PR3.1, both now complete. It does **not** authorise work on PR3.2 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
+> **Phase 3 being "in progress" authorises only the milestones the human has explicitly approved:** PR3.0 and PR3.1 (complete) and PR3.2 (approved 14 November 2026, D31). It does **not** authorise work on PR3.3 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 
 **Dependencies:** each milestone builds on the ones before it. The diagram shows the proposed dependency order, implied by the agreed numbering. Confirm a milestone's exact dependencies when it is planned.
 
@@ -69,7 +69,7 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
                                      └──────────────────────▶ PR3.8 (needs 3.4 and 3.5; 3.7 for execution views)
 ```
 
-> **Acceptance criteria for PR3.2–PR3.8 are *proposed*.** (PR3.1's were agreed when it was approved.) They are derived from each milestone's agreed capability list. Confirm and refine them with the human when the milestone is planned, before it moves to *In progress*.
+> **Acceptance criteria for PR3.3–PR3.8 are *proposed*.** (PR3.1's and PR3.2's were agreed when they were approved.) They are derived from each milestone's agreed capability list. Confirm and refine them with the human when the milestone is planned, before it moves to *In progress*.
 
 ### PR3.0 — Booski Blueprint & Project Documentation · Complete
 - **Purpose:** make the repository the permanent source of truth, so a fresh Claude Code session understands the product, the plan and the state.
@@ -108,24 +108,29 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
 - **Outcome:** the human chose Route A (D27), decided to acknowledge CCGS when inspired features are built (D28), and confirmed Unity 6.3 LTS (D29).
 - **Delivered:** commits `cca88f2`, `995cfe3`, `0c100bf`; merged on 14 November 2026 through PR #8 with a merge commit, `f782107` (D30). CI: PR runs 43632886441 and 43632892000 ✅; `main` run 43633165321 ✅. Status marked Complete in a follow-up docs-only PR (`phase-3/pr3.1-status-complete`).
 
-### PR3.2 — AI Core Foundation · Planned
-- **Scope:**
-  - Provider registry and model registry.
-  - Anthropic integration on an extensible provider architecture (D-P3-4).
-  - Model routing.
-  - Central request handling with timeouts and retries.
-  - Usage and cost tracking.
-  - AI request logs.
-  - Workspace configuration.
-- **Proposed to absorb (not yet agreed):** the Phase 2 plan's usage endpoint (real usage figures).
+### PR3.2 — AI Core Foundation · Awaiting review
+- **Scope (backend only):**
+  - A provider interface, with Anthropic as the first provider through the official `anthropic` Python SDK (D-P3-4).
+  - A model catalogue with prices, and task-based routing with tier defaults (D33).
+  - The AI gateway: one path for every AI request, with permission checks, routing, workspace settings, the monthly budget, timeouts and retries.
+  - Usage and cost tracking in an append-only, metadata-only request log (D35).
+  - Workspace AI settings: off by default, monthly budget (D34).
+  - API for owners and admins (D36): settings, connection check, catalogue, usage, request log. CLI: `booski ai check`, `booski ai seed-catalog`.
+- **Absorbed:** the Phase 2 plan's usage endpoint (real usage figures) is now `GET /ai/usage`.
+- **Out of scope:** agents, memory, tools, a chat endpoint, UI changes (the Cost & Usage screen stays a labelled preview), other providers, per-workspace keys, refusal fallbacks (D37).
 - **Dependencies:** PR3.0.
-- **Proposed acceptance criteria:**
-  - A second provider could be added without changing callers.
-  - Requests are scoped and permission-checked by workspace.
-  - Provider secrets are never returned by the API or committed.
-  - Every request records tokens and cost.
-  - Timeouts and retries are tested.
-  - Tests mock providers; no live API calls in CI.
+- **Acceptance criteria (agreed, D31):**
+  1. A second provider could be added without changing any caller.
+  2. Every AI request is permission-checked, scoped to a workspace, and blocked when AI is off or the cap is reached.
+  3. Every request records its model, tokens, cost, duration and outcome, in an append-only log.
+  4. Timeouts and retries are tested.
+  5. The API key never appears in responses, logs, the database or Git.
+  6. Tests use fake providers, with no live API calls in CI.
+  7. The migration is reversible and preserves existing data.
+  8. The permission matrix covers every new endpoint.
+  9. The CCGS acknowledgement is added (D28).
+  10. All CI jobs pass, and the docs are updated (built versus planned kept clear; a decision recorded for each choice).
+- **Branch:** `phase-3/pr3.2-ai-core-foundation`.
 
 ### PR3.3 — Persistent AI Memory & Knowledge · Planned
 - **Scope:**

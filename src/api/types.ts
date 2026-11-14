@@ -23,7 +23,8 @@ export type Capability =
   | "workspace.read" | "workspace.update" | "members.read" | "members.manage" | "invitations.manage"
   | "ownership.transfer" | "departments.manage" | "projects.manage" | "tasks.create" | "tasks.edit_any"
   | "comments.write" | "milestones.write" | "documents.write" | "decisions.write" | "approvals.request"
-  | "approvals.review_assigned" | "approvals.decide" | "activity.read" | "audit.read";
+  | "approvals.review_assigned" | "approvals.decide" | "activity.read" | "audit.read"
+  | "ai.use" | "ai.manage" | "ai.usage.read";
 
 export interface User {
   id: Uuid;

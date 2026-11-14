@@ -113,17 +113,41 @@ None of these exists:
 - **Providers:** `AuthProvider` (session from `GET /auth/me`) and `WorkspaceProvider` (active workspace, role capabilities, used only to decide which buttons to show; the server enforces everything).
 - **Live versus preview:** stored records are live. AI agents, the AI command bar, usage and cost, integrations, the reference vault and some department tabs are **labelled previews** using local data in `src/data/` and `src/services/`. Department tabs and artwork are frontend configuration (`src/config/departments.ts`, D14).
 
-## 6. AI Core (Planned: not implemented)
+## 6. AI Core (Partially built: PR3.2 awaiting review)
 
-> **Nothing in this section exists.** There is no AI provider integration, model registry, memory system, agent, orchestration or tool execution in the codebase. This section describes **planned capabilities** from [BOOSKI_VISION.md](BOOSKI_VISION.md) and the Phase 3 roadmap. Each layer is designed only when its milestone is approved, and its design decisions are recorded in DECISIONS.md then.
+> **Only the first layer exists, on the PR3.2 branch:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings. There is **no** memory system, agent, orchestration, tool execution or chat, and nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
 
-**Planned placement:** inside the Control Plane as new modules, not as a separate service, consistent with the modular-monolith direction (D-P3-2). To be confirmed in PR3.2.
+**Placement (built):** inside Booski Core as a new module, `backend/src/booski_core/modules/ai/`, not a separate service (D-P3-2).
 
-Planned layers, in roadmap order:
+### Built in PR3.2: providers, routing and the gateway
+
+```
+caller (later: agents, workflows) ──▶ gateway.complete(task, messages, project?)
+   1. permission: ai.use, narrowed by project access (D36)
+   2. route: task → model + effort + max tokens (task override, else tier default) (D33)
+   3. blocked if AI is off, the monthly budget is used up, or no provider is configured (D34)
+   4. provider.complete(call)  ── Anthropic SDK: timeouts + retries ──▶ Anthropic API
+   5. record in ai_requests (own transaction): outcome, tokens, exact cost, duration (D35)
+```
+
+| Part | Where | What it does |
+|---|---|---|
+| Provider interface | `modules/ai/providers/base.py` | Provider-neutral call, result and error types. Only provider adapters import a vendor SDK, so adding a provider changes no caller (D-P3-4). |
+| Anthropic provider | `modules/ai/providers/anthropic.py` | Official `anthropic` SDK; key passed explicitly (D32); SDK retries for rate limits, overload, 5xx and connection errors; per-attempt timeout; errors mapped to Booski codes; refusals returned as results (D37). |
+| Catalogue | `ai_models`, `ai_tiers`, `ai_tasks` (global) | Models with price bands (USD per million tokens, including cache and long-prompt rates), tier defaults and task routes. Seeded by migration 0004; changeable as data. |
+| Gateway | `modules/ai/gateway.py` | The only path to a provider (steps above). |
+| Request log | `ai_requests` (workspace-owned, append-only) | Metadata only; exact cost with nine decimal places. |
+| Workspace settings | `workspace_ai_settings` | On/off (off by default) and monthly budget ($20 default). Changes are recorded in the activity log. |
+| API | `/api/v1/w/{slug}/ai/…` | `settings`, `check`, `catalog`, `usage`, `requests`; owners and admins only (D36). |
+| CLI | `booski ai check`, `booski ai seed-catalog` | Server-level key check (not tied to a workspace, not logged), and catalogue repair. |
+
+There is deliberately **no** general chat endpoint: features built in later milestones call the gateway.
+
+### Planned layers, in roadmap order
 
 | Layer | Milestone | Intent |
 |---|---|---|
-| Providers and models | PR3.2 | Provider registry and model registry; Anthropic first; others (for example OpenAI) added without rebuilding the core; routing by complexity, capability and cost; central request handling with timeouts and retries; request logs; usage and cost per workspace, project, agent, provider and task. |
+| Providers and models | PR3.2 | **Built (awaiting review)**, see above. Not yet: other providers, per-agent cost (no agents exist), per-workspace routing. |
 | Memory and knowledge | PR3.3 | Workspace, project and department memory; decisions and lessons; integration with the existing knowledge base; context assembly; **permission-aware retrieval** with provenance. Starts with structured PostgreSQL and full-text search; embeddings or vector search only when justified (D-P3-5). |
 | Agents and orchestration | PR3.4 | Agents as **configurations** (role, instructions, tools, knowledge, model, quality and escalation rules) on shared orchestration: task assignment, delegation, multi-step plans, execution history, retry and recovery, human intervention (D-P3-3). |
 | Tools and execution | PR3.5 | Tool registry with schemas; permission-aware execution scoped to workspace and project; approval requirements; sandboxing, timeouts and limits; destructive-action protection. Starts with knowledge retrieval and existing platform capabilities. |

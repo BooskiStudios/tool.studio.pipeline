@@ -1,5 +1,7 @@
 """The ``booski`` command: run the API, manage the database schema and provision accounts.
 
+``booski ai`` seeds the AI catalogue and checks the AI provider key (PR 3.2).
+
 ``booski backup`` creates, verifies and restores database backups (see backend/DEPLOYMENT.md).
 """
 
@@ -11,8 +13,9 @@ import sys
 from pathlib import Path
 
 from alembic import command
+from sqlalchemy.orm import Session
 
-from booski_core.config import get_settings
+from booski_core.config import Settings, get_settings
 from booski_core.migrations_config import alembic_config
 
 
@@ -177,6 +180,65 @@ def _backup(args: argparse.Namespace) -> int:
     return 0
 
 
+def _ai(args: argparse.Namespace) -> int:
+    from booski_core.db import create_db_engine
+    from booski_core.modules.ai.catalog import seed_default_catalog
+
+    settings = get_settings()
+    engine = create_db_engine(settings)
+    try:
+        with Session(engine) as db:
+            if args.ai_command == "seed-catalog":
+                seed_default_catalog(db)
+                db.commit()
+                print("The default AI catalogue is in place (existing entries were left unchanged).")
+                return 0
+            return _ai_check(db, settings)
+    finally:
+        engine.dispose()
+
+
+def _ai_check(db: Session, settings: Settings) -> int:
+    """One tiny request straight to the provider, to prove the server's key works. Not tied to a
+    workspace, so it isn't logged or budgeted; it costs a fraction of a cent."""
+    from booski_core.core.errors import ProblemError
+    from booski_core.modules.ai.gateway import resolve_route
+    from booski_core.modules.ai.pricing import Pricing, cost_usd
+    from booski_core.modules.ai.providers import build_providers
+    from booski_core.modules.ai.providers.base import AiCall, ChatMessage, ProviderError
+
+    try:
+        route = resolve_route(db, "connection-check")
+    except ProblemError as error:
+        print(f"Error: {error} Run `booski db upgrade` first.", file=sys.stderr)
+        return 1
+    provider = build_providers(settings).get(route.model.provider)
+    if provider is None:
+        print(
+            "No AI provider is configured: set BOOSKI_ANTHROPIC_API_KEY in backend/.env (never commit it).",
+            file=sys.stderr,
+        )
+        return 1
+    call = AiCall(
+        model_key=route.model.model_key,
+        messages=(ChatMessage(role="user", content="Reply with the single word OK."),),
+        max_tokens=route.max_tokens,
+        effort=route.effort,
+    )
+    try:
+        result = provider.complete(call)
+    except ProviderError as error:
+        print(f"Error ({error.kind.value}): {error}", file=sys.stderr)
+        return 1
+    cost = cost_usd(Pricing.model_validate(route.model.pricing), result.usage)
+    outcome = "refused" if result.refused else "answered"
+    print(
+        f"{route.model.display_name} {outcome}: {result.usage.input_tokens} input and "
+        f"{result.usage.output_tokens} output tokens, ${cost:.6f}."
+    )
+    return 0 if not result.refused else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="booski", description="Booski Core command-line tools.")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -264,6 +326,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Name of an existing, empty database on the same server (default: the configured one).",
     )
     backup_parser.set_defaults(handler=_backup)
+
+    ai_parser = commands.add_parser("ai", help="AI Core: the model catalogue and a provider check.")
+    ai_commands = ai_parser.add_subparsers(dest="ai_command", required=True)
+    ai_commands.add_parser(
+        "seed-catalog", help="Insert the default models, tiers and tasks where they are missing."
+    )
+    ai_commands.add_parser(
+        "check",
+        help="Send one tiny request to the configured AI provider (costs a fraction of a cent).",
+    )
+    ai_parser.set_defaults(handler=_ai)
 
     return parser
 
