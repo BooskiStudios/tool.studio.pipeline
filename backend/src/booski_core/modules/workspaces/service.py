@@ -14,6 +14,7 @@ from booski_core.config import Settings
 from booski_core.core.errors import ProblemError
 from booski_core.core.request_meta import RequestMeta
 from booski_core.modules.activity.service import record_event
+from booski_core.modules.departments.service import seed_default_departments
 from booski_core.modules.identity.models import User
 from booski_core.modules.identity.service import get_user_by_email, set_password
 from booski_core.modules.workspaces.models import Invitation, Membership, Workspace
@@ -49,6 +50,7 @@ def create_workspace(
         raise ProblemError(409, "That workspace address is already taken. Choose another.") from None
     membership = Membership(workspace_id=workspace.id, user_id=owner.id, role=Role.OWNER.value)
     db.add(membership)
+    seed_default_departments(db, workspace.id)
     db.flush()
     record_event(
         db,

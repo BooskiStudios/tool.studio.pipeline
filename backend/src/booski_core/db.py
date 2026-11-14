@@ -1,11 +1,22 @@
 """Database engine, sessions and the declarative ``Base`` shared by every module's models."""
 
 import uuid
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from datetime import datetime
 
 from fastapi import Request
-from sqlalchemy import DateTime, Engine, MetaData, Uuid, create_engine, func, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Engine,
+    ForeignKeyConstraint,
+    Integer,
+    MetaData,
+    Uuid,
+    create_engine,
+    func,
+    text,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 from booski_core.config import Settings
@@ -31,6 +42,27 @@ def uuid_pk() -> Mapped[uuid.UUID]:
     return mapped_column(Uuid, primary_key=True, server_default=text("uuidv7()"))
 
 
+def check_in(column: str, values: Iterable[str], name: str) -> CheckConstraint:
+    """``CHECK (column IN (…))`` for text columns used as enums (decision D12: no PostgreSQL ENUM types)."""
+    quoted = ", ".join(f"'{value}'" for value in values)
+    return CheckConstraint(f"{column} IN ({quoted})", name=name)
+
+
+def same_workspace(
+    columns: tuple[str, str], target: str, *, ondelete: str | None = None, name: str | None = None
+) -> ForeignKeyConstraint:
+    """Composite foreign key ``(x_id, workspace_id) → target(id, workspace_id)``.
+
+    The database itself then rejects any link to a record in another workspace.
+    """
+    return ForeignKeyConstraint(
+        list(columns), [f"{target}.id", f"{target}.workspace_id"], ondelete=ondelete, name=name
+    )
+
+
+SLUG_CHECK = "~ '^[a-z0-9]+(-[a-z0-9]+)*$'"
+
+
 class CreatedAt:
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -39,6 +71,16 @@ class Timestamps(CreatedAt):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class Versioned:
+    """Optimistic concurrency: every change increments ``version``; a PATCH may send the version it read."""
+
+    version: Mapped[int] = mapped_column(Integer, server_default=text("1"))
+
+
+class Archivable:
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 def create_db_engine(settings: Settings) -> Engine:

@@ -47,7 +47,7 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106"]  # asserts and dummy credentials are fine in tests
-"src/booski_core/migrations/versions/**" = ["N999"]
+"src/booski_core/migrations/versions/**" = ["N999", "E501"]  # generated code and verbatim SQL
 
 [tool.mypy]
 python_version = "3.13"

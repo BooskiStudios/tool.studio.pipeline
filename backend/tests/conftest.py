@@ -119,10 +119,13 @@ def migrated_db(test_database_url: str) -> Iterator[Engine]:
     engine = create_engine(test_database_url)
     if database_revisions(engine) != migration_heads():
         command.upgrade(alembic_config(test_database_url), "head")
-    tables = ", ".join(table.name for table in Base.metadata.sorted_tables)
     with engine.begin() as connection:
-        # TRUNCATE doesn't fire row-level triggers, so the append-only activity log can be reset here.
-        connection.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+        # DELETE is ~1000x faster than TRUNCATE for near-empty tables (TRUNCATE recreates every table's
+        # files). Triggers (append-only guards, foreign keys) are switched off for this transaction only,
+        # which needs a superuser: true for `booski devdb` and the CI database.
+        connection.execute(text("SET LOCAL session_replication_role = replica"))
+        for table in reversed(Base.metadata.sorted_tables):
+            connection.execute(table.delete())
     try:
         yield engine
     finally:

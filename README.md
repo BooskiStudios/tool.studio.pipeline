@@ -17,7 +17,7 @@ npm run preview # serve dist/ locally
 
 ## Backend (Booski Core)
 
-The API lives in [backend/](backend/README.md) (FastAPI + PostgreSQL 18). It is not connected to the frontend yet; that happens in PR 2.6. Quick start on Windows, with no Docker needed:
+The API lives in [backend/](backend/README.md) (FastAPI + PostgreSQL 18). It is not connected to the frontend yet; that happens in PR 2.4. Quick start on Windows, with no Docker needed:
 
 ```powershell
 cd backend
@@ -120,4 +120,4 @@ Today `studioApi` is `demoStudioApi`, which resolves the bundled demo data. To c
 - Reference Vault moved into project workspaces; department tabs redesigned per department.
 
 ## Next milestone
-Booski Core PR 2.3: projects, departments, tasks and the activity feed, on top of PR 2.2's accounts, workspaces and role-based permissions. A live `StudioApi` implementation (with a real sign-in screen) follows in PR 2.6.
+PR 2.4: connect this frontend to Booski Core (sign-in screen, live `StudioApi`, workspace binding) and production readiness. Booski Core already serves projects, departments, tasks, milestones, documents, decisions, approvals and the activity feed.
