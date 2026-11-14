@@ -48,13 +48,14 @@
 | D29 | Unity 6.3 LTS is the studio's Unity version; upgrades expected | Explicitly approved decision | Agreed |
 | D30 | PR3.1 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.1 only) | Completed |
 | D31 | PR3.2 approved, with its scope and acceptance criteria | Explicitly approved decision | In effect |
-| D32 | One server-wide Anthropic API key in the server's environment | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
-| D33 | Task-based model routing with tier defaults (Haiku / Sonnet / Opus 5.5) | Explicitly approved decision + implementation choices | Implemented (PR3.2, awaiting review) |
-| D34 | AI off by default per workspace; monthly budget, $20 suggested | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
-| D35 | AI request log stores metadata only, not prompts or responses | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
-| D36 | Only owners and admins manage, view and use AI for now | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
-| D37 | Refusal fallbacks off for now | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
+| D32 | One server-wide Anthropic API key in the server's environment | Explicitly approved decision | Implemented (PR3.2) |
+| D33 | Task-based model routing with tier defaults (Haiku / Sonnet / Opus 5.5) | Explicitly approved decision + implementation choices | Implemented (PR3.2) |
+| D34 | AI off by default per workspace; monthly budget, $20 suggested | Explicitly approved decision | Implemented (PR3.2) |
+| D35 | AI request log stores metadata only, not prompts or responses | Explicitly approved decision | Implemented (PR3.2) |
+| D36 | Only owners and admins manage, view and use AI for now | Explicitly approved decision | Implemented (PR3.2) |
+| D37 | Refusal fallbacks off for now | Explicitly approved decision | Implemented (PR3.2) |
 | D38 | Questions to the human go through the pop-up, one at a time | Explicitly approved decision (working process) | In effect |
+| D39 | PR3.2 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.2 only) | Completed |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -403,6 +404,13 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Date:** 14 November 2026.
 - **Evidence:** the human: "In future anytime you have a questions for me can you do it in that same way, with the popup to let me answer please."
 - **Decision:** whenever Claude needs an answer or decision from the human, it asks through the interactive pop-up, one question at a time, recommended option first. Recorded in `CLAUDE.md` §4.
+
+### D39 — How PR3.2 was merged
+- **Category:** explicitly approved decision, **for PR3.2 only**.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Push, PR, merge commit (Recommended)": push the branch, open the PR, wait for all four CI jobs, merge with a merge commit, then mark PR3.2 Complete in a follow-up PR.
+- **Decision:** PR #10 was merged into `main` with a **merge commit** (`1bad661`) after its CI passed, including the end-to-end journeys; marking PR3.2 Complete was done in a separate docs-only PR.
+- **Scope:** PR3.2 and its follow-up status PR only. Like D22, D24 and D30, it is **not** a standing rule.
 
 ---
 
