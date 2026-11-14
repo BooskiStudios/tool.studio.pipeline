@@ -120,4 +120,4 @@ Today `studioApi` is `demoStudioApi`, which resolves the bundled demo data. To c
 - Reference Vault moved into project workspaces; department tabs redesigned per department.
 
 ## Next milestone
-Booski Core PR 2.2: identity, workspaces, sessions and role-based permissions. A live `StudioApi` implementation follows in PR 2.6.
+Booski Core PR 2.3: projects, departments, tasks and the activity feed, on top of PR 2.2's accounts, workspaces and role-based permissions. A live `StudioApi` implementation (with a real sign-in screen) follows in PR 2.6.

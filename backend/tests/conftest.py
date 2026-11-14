@@ -8,16 +8,24 @@ fails the run instead of silently skipping.
 """
 
 import os
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
+from alembic import command
+from argon2 import PasswordHasher
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import Engine, create_engine, make_url, text
+from sqlalchemy.orm import Session
 
 from booski_core.config import Environment, Settings
 from booski_core.main import create_app
+from booski_core.migrations_config import alembic_config, database_revisions, migration_heads
+from booski_core.models import Base
+from booski_core.security import passwords
+from helpers import Account, sign_in
 
 TEST_DB_ENV = "BOOSKI_TEST_DATABASE_URL"
 REQUIRE_DB_ENV = "BOOSKI_REQUIRE_DB"
@@ -89,3 +97,74 @@ def empty_database(test_database_url: str) -> Iterator[Engine]:
 @pytest.fixture
 def db_settings(test_database_url: str) -> Settings:
     return Settings(environment=Environment.TEST, database_url=test_database_url)
+
+
+# ---------------------------------------------------------------- fast password hashing
+
+
+@pytest.fixture(autouse=True)
+def fast_password_hashing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Production argon2 parameters take ~100 ms per hash; tests use cheap ones. test_security.py checks
+    that the production hasher keeps its real parameters."""
+    monkeypatch.setattr(passwords, "_hasher", PasswordHasher(time_cost=1, memory_cost=1024, parallelism=1))
+    passwords._dummy_hash.cache_clear()
+
+
+# ---------------------------------------------------------------- migrated database + clients
+
+
+@pytest.fixture
+def migrated_db(test_database_url: str) -> Iterator[Engine]:
+    """The test database at the latest migration, with every table emptied."""
+    engine = create_engine(test_database_url)
+    if database_revisions(engine) != migration_heads():
+        command.upgrade(alembic_config(test_database_url), "head")
+    tables = ", ".join(table.name for table in Base.metadata.sorted_tables)
+    with engine.begin() as connection:
+        # TRUNCATE doesn't fire row-level triggers, so the append-only activity log can be reset here.
+        connection.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+    try:
+        yield engine
+    finally:
+        engine.dispose()
+
+
+@pytest.fixture
+def app(migrated_db: Engine, db_settings: Settings) -> Iterator[FastAPI]:
+    application = create_app(db_settings)
+    try:
+        yield application
+    finally:
+        application.state.engine.dispose()  # clients aren't context-managed, so lifespan cleanup doesn't run
+
+
+ClientFactory = Callable[..., TestClient]
+
+
+@pytest.fixture
+def make_client(app: FastAPI) -> ClientFactory:
+    """A fresh browser: its own cookie jar. HTTPS so that Secure cookies are sent back, as in a browser."""
+
+    def factory(ip: str = "198.51.100.10") -> TestClient:
+        return TestClient(
+            app, base_url="https://testserver", client=(ip, 50000), raise_server_exceptions=True
+        )
+
+    return factory
+
+
+@pytest.fixture
+def client(make_client: ClientFactory) -> TestClient:
+    return make_client()
+
+
+@pytest.fixture
+def db(migrated_db: Engine) -> Iterator[Session]:
+    """A separate database session for arranging data and inspecting results."""
+    with Session(migrated_db) as session:
+        yield session
+
+
+@pytest.fixture
+def signed_in(make_client: ClientFactory) -> Callable[[Account], TestClient]:
+    return lambda account: sign_in(make_client(), account)
