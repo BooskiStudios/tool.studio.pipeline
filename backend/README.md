@@ -2,7 +2,7 @@
 
 The control-plane API for the Booski Studios operating system: FastAPI, SQLAlchemy 2, Alembic and PostgreSQL 18.
 
-**Status: PR 2.2 (identity and access).** Accounts, sign-in sessions, workspaces, memberships with roles, and invitations. The API still listens only on this machine (`127.0.0.1`): opening it to a network also needs HTTPS and a reviewed deployment, which come in a later PR. Studio data (projects, tasks) arrives with PR 2.3.
+**Status: PR 2.3 (studio platform).** Accounts and roles (PR 2.2) plus the studio's persistent data: departments, projects, workstreams, milestones, tasks with comments, the knowledge base, the Decision Log, the Approvals Centre and the activity feed. The API still listens only on this machine (`127.0.0.1`): opening it to a network also needs HTTPS and a reviewed deployment, which come in a later PR. The frontend is connected in PR 2.4.
 
 ## Accounts and sign-in
 
@@ -32,6 +32,39 @@ Operator commands: `booski set-password --email …` (signs the user out everywh
 | `POST /api/v1/invitations/preview` · `POST /invitations/accept` | For the invitee (token in the body, never the URL) |
 
 **For API clients:** after signing in, send the `csrf_token` from the login response (also in the `__Host-booski_csrf` cookie) as an `X-CSRF-Token` header on every POST, PATCH and DELETE. Errors are `application/problem+json`. Full interactive docs: `/api/docs`.
+
+## Studio data API
+
+Everything lives under `/api/v1/w/{workspace_slug}` and is only visible to members of that workspace. Lists return `{"items": [...], "next_cursor": …}`: pass `next_cursor` back as `?cursor=` for the next page (`?limit=` up to 200). Editable records carry a `version`; send it back in a `PATCH` and you get `409 Conflict` instead of silently overwriting someone else's change.
+
+| Area | Endpoints |
+| --- | --- |
+| Departments | `GET`/`POST /departments` · `GET`/`PATCH /departments/{slug}` (rename, recolour, reorder, archive) |
+| Projects | `GET`/`POST /projects` · `GET`/`PATCH /projects/{slug}` (includes progress computed from tasks, and your `capabilities` in the project) |
+| Project access | `GET /projects/{slug}/members` · `PUT`/`DELETE /projects/{slug}/members/{user_id}` |
+| Workstreams | `GET`/`POST /projects/{slug}/workstreams` · `PATCH …/workstreams/{id}` |
+| Milestones | `GET`/`POST /projects/{slug}/milestones` · `GET`/`PATCH /milestones/{id}` |
+| Tasks | `GET`/`POST /tasks` (filters: project, department, workstream, milestone, status, priority, assignee, parent, q, due_before) · `GET`/`PATCH /tasks/{id}` · `GET /tasks/{id}/history` |
+| Comments | `GET`/`POST /tasks/{id}/comments` · `PATCH`/`DELETE /comments/{id}` |
+| Knowledge | `GET`/`POST /documents` · `GET`/`PATCH /documents/{id}` · `GET /documents/{id}/revisions[/{n}]` |
+| Decisions | `GET`/`POST /decisions` · `GET`/`PATCH /decisions/{id}` · `GET /decisions/{id}/history` |
+| Approvals | `GET`/`POST /approvals` · `GET`/`PATCH /approvals/{id}` · `GET`/`POST /approvals/{id}/reviews` · `POST …/resubmit` · `POST …/cancel` |
+| Activity | `GET /activity` (filters: project, entity_type, entity_id, actor, verb, since, until) |
+
+**Who can do what** (the backend enforces all of it):
+
+| | Owner | Admin | Developer | Collaborator | Viewer |
+| --- | :-: | :-: | :-: | :-: | :-: |
+| Read studio data and activity | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Comment on tasks | ✓ | ✓ | ✓ | ✓ | – |
+| Create tasks | ✓ | ✓ | ✓ | ✓ | – |
+| Edit any task | ✓ | ✓ | ✓ | own or assigned | – |
+| Milestones, documents, decisions, request approvals | ✓ | ✓ | ✓ | – | – |
+| Decide approvals | ✓ | ✓ | when assigned | – | – |
+| Projects, workstreams, project access, departments | ✓ | ✓ | – | – | – |
+| See invitation events in the activity feed | ✓ | ✓ | – | – | – |
+
+Project rules narrow these, never widen them: a **restricted** project is invisible (404) to everyone except owners, admins and its access list, and **viewer** project access makes a project read-only for that person. Nobody can decide their own approval request.
 
 ## Requirements
 

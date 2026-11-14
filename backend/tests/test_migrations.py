@@ -85,3 +85,80 @@ def test_models_and_migrations_agree(empty_database: Engine, test_database_url: 
     with empty_database.connect() as connection:
         differences = compare_metadata(MigrationContext.configure(connection), Base.metadata)
     assert differences == []
+
+
+STUDIO_TABLES = {
+    "departments",
+    "projects",
+    "project_members",
+    "workstreams",
+    "milestones",
+    "tasks",
+    "task_comments",
+    "documents",
+    "document_revisions",
+    "decisions",
+    "decision_documents",
+    "approvals",
+    "approval_reviews",
+}
+
+
+def _seed_pr22_data(engine: Engine) -> None:
+    """A user, a workspace, a membership and an activity event, as PR 2.2 would have left them."""
+    with engine.begin() as connection:
+        user_id = connection.scalar(
+            text("INSERT INTO users (email, display_name) VALUES ('owner@booski.test', 'Owner') RETURNING id")
+        )
+        workspace_id = connection.scalar(
+            text(
+                "INSERT INTO workspaces (slug, name, created_by_user_id)"
+                " VALUES ('booski', 'Booski', :u) RETURNING id"
+            ),
+            {"u": user_id},
+        )
+        connection.execute(
+            text("INSERT INTO workspace_memberships (workspace_id, user_id, role) VALUES (:w, :u, 'owner')"),
+            {"w": workspace_id, "u": user_id},
+        )
+        connection.execute(
+            text(
+                "INSERT INTO activity_events"
+                " (workspace_id, actor_type, actor_user_id, verb, entity_type, summary)"
+                " VALUES (:w, 'user', :u, 'workspace.created', 'workspace', 'Created')"
+            ),
+            {"w": workspace_id, "u": user_id},
+        )
+
+
+def _count(engine: Engine, sql: str) -> int:
+    with engine.connect() as connection:
+        return int(connection.scalar(text(sql)) or 0)
+
+
+def test_studio_migration_keeps_existing_data_and_rolls_back_cleanly(
+    empty_database: Engine, test_database_url: str
+) -> None:
+    config = alembic_config(test_database_url)
+    command.upgrade(config, "0002")
+    _seed_pr22_data(empty_database)
+
+    command.upgrade(config, "0003")
+    assert _tables(empty_database) >= STUDIO_TABLES
+    assert _count(empty_database, "SELECT count(*) FROM users") == 1
+    assert _count(empty_database, "SELECT count(*) FROM workspace_memberships") == 1
+    assert _count(empty_database, "SELECT count(*) FROM activity_events WHERE project_id IS NULL") == 1
+    # The existing workspace received the seven default departments.
+    assert _count(empty_database, "SELECT count(*) FROM departments") == 7
+
+    command.downgrade(config, "0002")
+    assert not (_tables(empty_database) & STUDIO_TABLES)
+    columns = {c["name"] for c in inspect(empty_database).get_columns("activity_events")}
+    assert "project_id" not in columns
+    assert _count(empty_database, "SELECT count(*) FROM pg_proc WHERE proname = 'booski_reject_change'") == 0
+    # PR 2.2 data is untouched by the rollback.
+    assert _count(empty_database, "SELECT count(*) FROM users") == 1
+    assert _count(empty_database, "SELECT count(*) FROM activity_events") == 1
+
+    command.upgrade(config, "head")
+    assert _count(empty_database, "SELECT count(*) FROM departments") == 7

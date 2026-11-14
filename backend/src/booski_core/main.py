@@ -11,8 +11,32 @@ from booski_core.core.errors import install_error_handlers
 from booski_core.core.origin import install_origin_check
 from booski_core.core.request_id import install_request_id
 from booski_core.db import create_db_engine, create_session_factory
+from booski_core.modules.activity.router import router as activity_router
+from booski_core.modules.approvals.router import router as approvals_router
+from booski_core.modules.decisions.router import router as decisions_router
+from booski_core.modules.departments.router import router as departments_router
 from booski_core.modules.identity.router import router as auth_router
+from booski_core.modules.knowledge.router import router as documents_router
+from booski_core.modules.milestones.router import router as milestones_router
+from booski_core.modules.projects.router import router as projects_router
+from booski_core.modules.tasks.router import router as tasks_router
 from booski_core.modules.workspaces.router import invitations_router, workspace_router, workspaces_router
+
+ROUTERS = (
+    health.router,
+    auth_router,
+    workspaces_router,
+    workspace_router,
+    invitations_router,
+    departments_router,
+    projects_router,
+    milestones_router,
+    tasks_router,
+    documents_router,
+    decisions_router,
+    approvals_router,
+    activity_router,
+)
 
 API_PREFIX = "/api/v1"
 
@@ -45,6 +69,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_request_id(app)
     install_error_handlers(app)
 
-    for router in (health.router, auth_router, workspaces_router, workspace_router, invitations_router):
+    for router in ROUTERS:
         app.include_router(router, prefix=API_PREFIX)
     return app

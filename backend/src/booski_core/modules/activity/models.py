@@ -22,11 +22,14 @@ class ActivityEvent(CreatedAt, Base):
         Index("ix_activity_events_workspace_id_created_at", "workspace_id", "created_at"),
         Index("ix_activity_events_entity", "entity_type", "entity_id", "created_at"),
         Index("ix_activity_events_actor_user_id_created_at", "actor_user_id", "created_at"),
+        Index("ix_activity_events_project_id_created_at", "project_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
     # NULL for events outside any workspace (e.g. signing in). No cascade: history outlives what it describes.
     workspace_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("workspaces.id"))
+    # Set for events about a project or anything inside one, so restricted-project history stays private.
+    project_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("projects.id"))
     actor_type: Mapped[str] = mapped_column(Text)
     actor_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
     verb: Mapped[str] = mapped_column(Text)  # e.g. "membership.role_changed"
