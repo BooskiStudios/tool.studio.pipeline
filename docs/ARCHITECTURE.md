@@ -115,7 +115,7 @@ None of these exists:
 
 ## 6. AI Core (Partially built: PR3.2)
 
-> **Two layers exist:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings (PR3.2); and memory entries, permission-aware search and context assembly (PR3.3, awaiting review). There is **no** agent, orchestration, tool execution or chat, and nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
+> **Two layers exist:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings (PR3.2); and memory entries, permission-aware search and context assembly (PR3.3). There is **no** agent, orchestration, tool execution or chat, and nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
 
 **Placement (built):** inside Booski Core as a new module, `backend/src/booski_core/modules/ai/`, not a separate service (D-P3-2).
 
@@ -143,7 +143,7 @@ caller (later: agents, workflows) ──▶ gateway.complete(task, messages, pro
 
 There is deliberately **no** general chat endpoint: features built in later milestones call the gateway.
 
-### Built in PR3.3: memory, search and context (awaiting review)
+### Built in PR3.3: memory, search and context
 
 | Part | Where | What it does |
 |---|---|---|
@@ -157,7 +157,7 @@ There is deliberately **no** general chat endpoint: features built in later mile
 | Layer | Milestone | Intent |
 |---|---|---|
 | Providers and models | PR3.2 | **Built**, see above. Not yet: other providers, per-agent cost (no agents exist), per-workspace routing. |
-| Memory and knowledge | PR3.3 | **Built (awaiting review)**, see above. Not yet: AI-written memories (PR3.4), tasks and milestones as sources, embeddings. |
+| Memory and knowledge | PR3.3 | **Built**, see above. Not yet: AI-written memories (PR3.4), tasks and milestones as sources, embeddings. |
 | Agents and orchestration | PR3.4 | Agents as **configurations** (role, instructions, tools, knowledge, model, quality and escalation rules) on shared orchestration: task assignment, delegation, multi-step plans, execution history, retry and recovery, human intervention (D-P3-3). |
 | Tools and execution | PR3.5 | Tool registry with schemas; permission-aware execution scoped to workspace and project; approval requirements; sandboxing, timeouts and limits; destructive-action protection. Starts with knowledge retrieval and existing platform capabilities. |
 | Command Centre and AI Workforce | PR3.8 | Connects the existing interface: command bar, workforce dashboard, live progress, approvals, usage and cost, errors and human controls. |

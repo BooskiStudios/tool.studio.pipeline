@@ -57,9 +57,10 @@
 | D38 | Questions to the human go through the pop-up, one at a time | Explicitly approved decision (working process) | In effect |
 | D39 | PR3.2 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.2 only) | Completed |
 | D40 | PR3.3 approved: backend only, no AI calls | Explicitly approved decision | In effect |
-| D41 | AI memory = curated memory entries + permission-aware full-text search | Explicitly approved decision + implementation choices | Implemented (PR3.3, awaiting review) |
-| D42 | Developers and above write memory entries | Explicitly approved decision | Implemented (PR3.3, awaiting review) |
-| D43 | Search and AI context draw on memory, documents and decisions | Explicitly approved decision | Implemented (PR3.3, awaiting review) |
+| D41 | AI memory = curated memory entries + permission-aware full-text search | Explicitly approved decision + implementation choices | Implemented (PR3.3) |
+| D42 | Developers and above write memory entries | Explicitly approved decision | Implemented (PR3.3) |
+| D43 | Search and AI context draw on memory, documents and decisions | Explicitly approved decision | Implemented (PR3.3) |
+| D44 | PR3.3 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.3 only) | Completed |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -448,6 +449,13 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Date:** 14 November 2026.
 - **Evidence:** pop-up answer "Memory, documents, decisions (Recommended)".
 - **Decision:** search and context assembly cover memory entries, knowledge documents and the Decision Log. Tasks and milestones are not included yet.
+
+### D44 — How PR3.3 was merged
+- **Category:** explicitly approved decision, **for PR3.3 only**.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Push, PR, merge commit (Recommended)".
+- **Decision:** PR #12 was merged into `main` with a **merge commit** (`39ae4ab`) after its CI passed, including the end-to-end journeys; marking PR3.3 Complete was done in a separate docs-only PR.
+- **Scope:** PR3.3 and its follow-up status PR only. Like D22, D24, D30 and D39, it is **not** a standing rule.
 
 ---
 

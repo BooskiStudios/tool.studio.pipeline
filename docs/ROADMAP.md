@@ -22,7 +22,7 @@ A planned or proposed item is **never** an approved task. Only the human moves a
 |---|---|---|
 | 1 | Frontend prototype | **Complete** |
 | 2 | Platform foundations (PR1, PR2.1–PR2.4) | **Complete** |
-| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0, PR3.1 and PR3.2 are complete. PR3.3 is approved and awaiting review. PR3.4–PR3.8 are planned and not authorised. |
+| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0–PR3.3 are complete. No milestone is currently approved; PR3.4–PR3.8 are planned and not authorised. |
 | 4 | Game Development Intelligence | Planned (strategic) |
 | 5 | Concept Lab & Asset Production | Planned (strategic) |
 | 6 | Marketing Studio & Studio Operations | Planned (strategic) |
@@ -59,7 +59,7 @@ The original Phase 2 plan described PR2.1–PR2.6, but Phase 2 was delivered as 
 
 **Goal:** build the shared AI infrastructure: providers, memory, agents, tools, the Local Worker and Claude Code execution. Bring it into the existing interface.
 
-> **Phase 3 being "in progress" authorises only the milestones the human has explicitly approved:** PR3.0, PR3.1 and PR3.2 (complete) and PR3.3 (approved 14 November 2026, D40). It does **not** authorise work on PR3.4 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
+> **Phase 3 being "in progress" authorises only the milestones the human has explicitly approved:** PR3.0–PR3.3, all now complete. It does **not** authorise work on PR3.4 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 
 **Dependencies:** each milestone builds on the ones before it. The diagram shows the proposed dependency order, implied by the agreed numbering. Confirm a milestone's exact dependencies when it is planned.
 
@@ -133,7 +133,7 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
 - **Branch:** `phase-3/pr3.2-ai-core-foundation`.
 - **Delivered:** commit `c90b418`; merged on 14 November 2026 through PR #10 with a merge commit, `1bad661` (D39). CI: PR runs 43642841055 and 43642849992 ✅ (including the end-to-end journeys); `main` run 43643259648 ✅. Status marked Complete in a follow-up docs-only PR (`phase-3/pr3.2-status-complete`).
 
-### PR3.3 — Persistent AI Memory & Knowledge · Awaiting review
+### PR3.3 — Persistent AI Memory & Knowledge · Complete
 - **Scope (backend only, no AI calls, D40):**
   - Memory entries (facts, conventions, lessons, preferences) scoped to the workspace, a project or a department, with provenance; edit, archive and history (D41, D42).
   - **Permission-aware** full-text search across memory, knowledge documents and decisions (D43), with the source of every result.
@@ -152,6 +152,7 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
   8. The permission matrix covers every new route.
   9. All CI passes, and the docs and decisions are updated.
 - **Branch:** `phase-3/pr3.3-ai-memory-knowledge`.
+- **Delivered:** commit `87ea2cb`; merged on 14 November 2026 through PR #12 with a merge commit, `39ae4ab` (D44). CI: PR runs 43649601040 and 43649605521 ✅ (including the end-to-end journeys); `main` run 43650005302 ✅. Status marked Complete in a follow-up docs-only PR (`phase-3/pr3.3-status-complete`).
 
 ### PR3.4 — Agent Framework & Orchestration · Planned
 - **Scope:**
