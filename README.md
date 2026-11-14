@@ -2,6 +2,17 @@
 
 React + TypeScript + Vite frontend for the Booski Studios operating system, connected to **Booski Core** (FastAPI + PostgreSQL, in [backend/](backend/README.md)). Projects, departments, tasks, milestones, documents, decisions, approvals and activity are real, persistent and shared by everyone in a workspace. AI agents, usage reporting and integrations are clearly marked **previews** of later phases.
 
+## Project documentation
+
+| Document | Read it for |
+|---|---|
+| [CLAUDE.md](CLAUDE.md) | How to work in this repository (for Claude Code and humans alike). Start here. |
+| [docs/BOOSKI_VISION.md](docs/BOOSKI_VISION.md) | What Booski is and what we are building. |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Phases 1–8 and the milestone plan (PR3.0–PR3.8). |
+| [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md) | Where the project is right now and what's next. |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How it's built, and what's built versus planned. |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Product and architecture decisions, and open proposals. |
+
 ## Run (development)
 
 Requires Node.js 20+ and the backend set up once (see below).
@@ -144,4 +155,4 @@ Every other page requires signing in. Departments come from Booski Core (each wo
 - Reference Vault moved into project workspaces; department tabs redesigned per department.
 
 ## Next milestone
-Phase 3 — AI orchestration: agents acting through the same permission rules, the AI command bar, and approvals that gate agent actions.
+Phase 3 — AI Core & Workforce (PR3.0–PR3.8). See [docs/ROADMAP.md](docs/ROADMAP.md) for the plan and [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md) for the current milestone.
