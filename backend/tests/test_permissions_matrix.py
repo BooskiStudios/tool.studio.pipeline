@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from booski_core.access.roles import Role
 from booski_core.core.request_meta import utcnow
+from booski_core.modules.ai.models import WorkspaceAiSettings
 from booski_core.modules.workspaces.models import Invitation
 from booski_core.security.tokens import hash_token
 from helpers import sign_in
@@ -328,6 +329,20 @@ MATRIX = [
     ),
     # ---- activity
     Case("GET", W + "/activity", EVERYONE, 200, lambda w: f"{B}/activity"),
+    # ---- AI (PR 3.2): owners and admins only (D36). AI is switched on in this world.
+    Case("GET", W + "/ai/settings", ADMINS, 200, lambda w: f"{B}/ai/settings"),
+    Case(
+        "PATCH",
+        W + "/ai/settings",
+        ADMINS,
+        200,
+        lambda w: f"{B}/ai/settings",
+        lambda w: {"monthly_budget_usd": "25"},
+    ),
+    Case("POST", W + "/ai/check", ADMINS, 200, lambda w: f"{B}/ai/check", lambda w: {}),
+    Case("GET", W + "/ai/catalog", ADMINS, 200, lambda w: f"{B}/ai/catalog"),
+    Case("GET", W + "/ai/usage", ADMINS, 200, lambda w: f"{B}/ai/usage"),
+    Case("GET", W + "/ai/requests", ADMINS, 200, lambda w: f"{B}/ai/requests"),
 ]
 
 
@@ -343,6 +358,7 @@ def world(db: Session) -> World:
         expires_at=utcnow().replace(year=utcnow().year + 1),
     )
     db.add(invitation)
+    db.add(WorkspaceAiSettings(workspace_id=studio.workspace_id, enabled=True))
     db.commit()
     return World(studio, invitation.id)
 

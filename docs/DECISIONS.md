@@ -47,6 +47,14 @@
 | D28 | Acknowledge CCGS when CCGS-inspired features are built | Explicitly approved decision (resolves PROP-4) | Agreed; not yet due |
 | D29 | Unity 6.3 LTS is the studio's Unity version; upgrades expected | Explicitly approved decision | Agreed |
 | D30 | PR3.1 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.1 only) | Completed |
+| D31 | PR3.2 approved, with its scope and acceptance criteria | Explicitly approved decision | In effect |
+| D32 | One server-wide Anthropic API key in the server's environment | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
+| D33 | Task-based model routing with tier defaults (Haiku / Sonnet / Opus 5.5) | Explicitly approved decision + implementation choices | Implemented (PR3.2, awaiting review) |
+| D34 | AI off by default per workspace; monthly budget, $20 suggested | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
+| D35 | AI request log stores metadata only, not prompts or responses | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
+| D36 | Only owners and admins manage, view and use AI for now | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
+| D37 | Refusal fallbacks off for now | Explicitly approved decision | Implemented (PR3.2, awaiting review) |
+| D38 | Questions to the human go through the pop-up, one at a time | Explicitly approved decision (working process) | In effect |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -336,6 +344,66 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Decision:** PR #8 was merged into `main` with a **merge commit** (`f782107`) after its CI passed; marking PR3.1 Complete was done in a separate docs-only PR.
 - **Scope:** PR3.1 and its follow-up status PR only. Like D22 and D24, it is **not** a standing rule: each future merge strategy needs the human's approval.
 
+### D31 — PR3.2 approved, with its scope and acceptance criteria
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** Claude presented the PR3.2 plan; the human answered each decision in a pop-up (D32–D37) and then chose "Approve and start (Recommended)", without the optional live test call.
+- **Decision:** PR3.2 (AI Core Foundation) proceeds on `phase-3/pr3.2-ai-core-foundation` with the acceptance criteria recorded in ROADMAP.md. Backend only; the Cost & Usage screen stays a labelled preview until PR3.8.
+- **Scope note:** no agents, memory, tools, chat endpoint, other providers or per-workspace keys.
+
+### D32 — Where the Anthropic API key lives
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Server .env file (Recommended)".
+- **Decision:** one key for the whole server, `BOOSKI_ANTHROPIC_API_KEY`, in `backend/.env` (git-ignored) or the environment. It is never stored in the database, returned by the API, logged or committed. Without it, no provider is configured and every AI request is blocked.
+- **Implementation choice:** the key is passed to the SDK explicitly, so the SDK never falls back to other credentials it finds on the machine.
+- **Alternative not chosen:** per-workspace keys encrypted in the database (needs encryption-key management; possible later).
+
+### D33 — Task-based model routing
+- **Category:** explicitly approved decision + implementation choices.
+- **Date:** 14 November 2026.
+- **Evidence:** asked which model each tier should use, the human asked for "the optimal model for the tasks to ensure it's using the cheapest token cost whilst performing the best for the tier and the task", then chose "Task-based routing (Recommended)".
+- **Decision:** every AI request names a **task** (for example `classify`, `draft`, `review`). The task's route picks the model, effort and output limit; when a task doesn't override them, its **tier** default applies: `routine` → Claude Haiku 5.5, `standard` → Claude Sonnet 5.5, `deep` → Claude Opus 5.5. Routes and prices are data in PostgreSQL, changeable without code changes; the request log's cost and outcome data is used to tune them.
+- **Implementation choices (PR3.2, not separately approved):**
+  - Tier efforts: `routine` low, `standard` medium, `deep` high. Output limits: 4,096 / 16,000 / 16,000 tokens.
+  - Starting tasks: `connection-check`, `classify`, `extract`, `summarise` (routine); `draft` (standard); `review`, `plan` (deep). These are a first guess, to be tuned from measurements.
+  - Prices are Anthropic's published rates on 14 November 2026, in US dollars per million tokens, including cache rates and Haiku 5.5's higher rates above 100,000 prompt tokens.
+  - The catalogue is global (shared by every workspace). Per-workspace routing is not built.
+- **Alternatives not chosen:** fixed tiers only; automatic escalation to a stronger model on a failed check (needs quality checks that don't exist yet).
+- **Inspiration:** model tiers by task complexity come from the PR3.1 audit of Claude Code Game Studios; acknowledged in `ACKNOWLEDGEMENTS.md` (D28).
+
+### D34 — AI off by default, with a monthly budget
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "$20 / month (Recommended)" to the question about AI being off until an owner or admin switches it on and sets a monthly cap.
+- **Decision:** AI is switched off in every workspace until an owner or admin switches it on. Each workspace has a monthly budget in US dollars (calendar month, UTC), $20 by default. Requests are refused ("blocked") once this month's recorded spend reaches the budget.
+- **Known limit (implementation choice):** the check runs before each request, so the request that crosses the budget can take spend slightly over it.
+
+### D35 — Metadata-only AI request log
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Metadata only (Recommended)".
+- **Decision:** `ai_requests` records who, workspace and project, task, tier, model, effort, outcome, error or refusal category, tokens, cost, duration and request ids, but **not** prompt or response text. The log is append-only (a database trigger rejects changes). Whether to store content is revisited in PR3.3.
+
+### D36 — Who can manage, see and use AI
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Owners & admins (Recommended)".
+- **Decision:** new capabilities `ai.manage` (settings, connection check, catalogue), `ai.usage.read` (usage and the request log) and `ai.use` (send requests through the gateway) are granted to owners and admins only. Later milestones grant `ai.use` to more roles as AI features arrive. Project access narrows these as for every capability.
+
+### D37 — Refusal fallbacks off for now
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Off for now (Recommended)".
+- **Decision:** Anthropic's server-side refusal fallbacks are not enabled. A declined request is recorded as `refused`, with its category, and reported to the caller. Revisit in PR3.4, when real agent tasks show whether refusals happen.
+- **Why:** keeps routing and cost tracking exact (a fallback can bill a different model per attempt).
+
+### D38 — Questions through the pop-up
+- **Category:** explicitly approved decision (working process).
+- **Date:** 14 November 2026.
+- **Evidence:** the human: "In future anytime you have a questions for me can you do it in that same way, with the popup to let me answer please."
+- **Decision:** whenever Claude needs an answer or decision from the human, it asks through the interactive pop-up, one question at a time, recommended option first. Recorded in `CLAUDE.md` §4.
+
 ---
 
 ## Phase 3 direction (D-P3-1 – D-P3-13)
@@ -379,6 +447,10 @@ Notes for later review. None of these is a decision.
 - **D2:** whether the Local Worker's long-poll endpoint should be async (PR3.6 design).
 - **D13:** whether to enable row-level security if multiple studios or external hosting raise the risk.
 - **D29:** when to upgrade beyond Unity 6.3 LTS, and how Booski supports a project's upgrade (a planned workflow, version-scoped guidance, re-running tests).
+- **D33:** per-workspace routing overrides; tuning task routes from measured cost and outcomes; automatic escalation to a stronger model.
+- **D34:** reserving the worst-case cost of a request before running it, so the budget can never be exceeded.
+- **D35:** whether, and for how long, to store prompt and response content (PR3.3).
+- **D37:** turning on refusal fallbacks (PR3.4).
 
 ## Proposals — awaiting a decision
 

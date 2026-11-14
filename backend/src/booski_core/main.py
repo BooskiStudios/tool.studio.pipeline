@@ -14,6 +14,8 @@ from booski_core.core.request_id import install_request_id
 from booski_core.core.security_headers import install_security_headers
 from booski_core.db import create_db_engine, create_session_factory
 from booski_core.modules.activity.router import router as activity_router
+from booski_core.modules.ai.providers import build_providers
+from booski_core.modules.ai.router import router as ai_router
 from booski_core.modules.approvals.router import router as approvals_router
 from booski_core.modules.decisions.router import router as decisions_router
 from booski_core.modules.departments.router import router as departments_router
@@ -38,6 +40,7 @@ ROUTERS = (
     decisions_router,
     approvals_router,
     activity_router,
+    ai_router,
 )
 
 API_PREFIX = "/api/v1"
@@ -65,6 +68,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)
+    # AI providers with a key on this server (PR 3.2). Tests replace this with fakes.
+    app.state.ai_providers = build_providers(settings)
 
     # Middleware added last runs first: request ids wrap everything, including origin rejections.
     install_origin_check(app, settings.allowed_origins)

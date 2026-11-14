@@ -47,6 +47,7 @@ All settings are environment variables with the `BOOSKI_` prefix (see `backend/R
 | `BOOSKI_FRONTEND_DIST` | Set by the image (`/app/web`). Outside the image: the `dist/` folder from `npm run build`. |
 | `BOOSKI_LOG_LEVEL` | `INFO` (or `WARNING`). Logs go to standard output with timestamps; unexpected errors include the request id shown to the user. |
 | `BOOSKI_BACKUP_DIR` | Where `booski backup create` writes (outside the repository). |
+| `BOOSKI_ANTHROPIC_API_KEY` | Optional. The Anthropic API key used for every workspace (keep it in your secret store). Without it AI stays unavailable. Each workspace still starts with AI switched off and a monthly budget (default $20) that an owner or admin sets. `booski ai check` sends one tiny request to confirm the key works. |
 
 ## 4. Before allowing external access (checklist)
 

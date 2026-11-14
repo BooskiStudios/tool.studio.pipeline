@@ -55,6 +55,7 @@ Also keep the categories in `docs/DECISIONS.md` distinct: explicitly approved de
   3. Wait for approval.
   4. Then implement, test and stop for review.
 - **Stay in scope:** don't redesign or replace working functionality. Don't add infrastructure (microservices, brokers, vector databases, new services) without a demonstrated requirement (D-P3-2). Keep the existing visual design.
+- **Ask questions through the pop-up, one at a time.** Whenever you need the human to answer a question or make a decision, use the interactive question pop-up (the `AskUserQuestion` tool), not questions in plain text. Ask **one question per pop-up**, in sequence. Give each option a short label and a plain-language description, and put the recommended option first, marked "(Recommended)". If the human's answer asks for clarification or a different approach, explain briefly and ask again in a new pop-up. End with a pop-up confirming approval before starting work.
 - **Distinguish proposals from decisions.** Label recommendations as proposals that need approval.
 - **Verify before claiming.** Never report a test, build, CI run or Git operation as successful unless you ran or checked it. Report failures with their actual output.
 

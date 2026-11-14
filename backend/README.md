@@ -50,6 +50,7 @@ Everything lives under `/api/v1/w/{workspace_slug}` and is only visible to membe
 | Decisions | `GET`/`POST /decisions` · `GET`/`PATCH /decisions/{id}` · `GET /decisions/{id}/history` |
 | Approvals | `GET`/`POST /approvals` · `GET`/`PATCH /approvals/{id}` · `GET`/`POST /approvals/{id}/reviews` · `POST …/resubmit` · `POST …/cancel` |
 | Activity | `GET /activity` (filters: project, entity_type, entity_id, actor, verb, since, until) |
+| AI (PR 3.2) | `GET`/`PATCH /ai/settings` (on/off, monthly budget) · `POST /ai/check` (one tiny request through the gateway) · `GET /ai/catalog` (models, prices, tiers, tasks) · `GET /ai/usage?month=YYYY-MM` · `GET /ai/requests` |
 
 **Who can do what** (the backend enforces all of it):
 
@@ -63,6 +64,7 @@ Everything lives under `/api/v1/w/{workspace_slug}` and is only visible to membe
 | Decide approvals | ✓ | ✓ | when assigned | – | – |
 | Projects, workstreams, project access, departments | ✓ | ✓ | – | – | – |
 | See invitation events in the activity feed | ✓ | ✓ | – | – | – |
+| AI settings, usage and cost; use AI | ✓ | ✓ | – | – | – |
 
 Project rules narrow these, never widen them: a **restricted** project is invisible (404) to everyone except owners, admins and its access list, and **viewer** project access makes a project read-only for that person. Nobody can decide their own approval request.
 
@@ -125,6 +127,8 @@ Settings are environment variables with the `BOOSKI_` prefix, read from `backend
 | `BOOSKI_FRONTEND_DIST` | unset | Folder with the built web app (`npm run build` → `dist/`). When set, the API serves it too (the container image does). |
 | `BOOSKI_TRUSTED_PROXIES` | `[]` | JSON list of reverse-proxy IPs whose `X-Forwarded-*` headers are trusted. |
 | `BOOSKI_BACKUP_DIR` | `var/backups` | Where `booski backup create` writes. |
+| `BOOSKI_ANTHROPIC_API_KEY` | unset | Anthropic API key for the whole server. Unset: no AI provider, every AI request is blocked. Secret: `.env` or a secret store only. |
+| `BOOSKI_AI_REQUEST_TIMEOUT_SECONDS` / `BOOSKI_AI_MAX_RETRIES` | `120` / `2` | Time limit per attempt, and retries for rate limits, overload, server and connection errors. |
 
 ## Containers and cloud hosting
 

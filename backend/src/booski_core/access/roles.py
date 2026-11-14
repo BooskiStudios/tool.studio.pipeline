@@ -43,6 +43,10 @@ class Capability(StrEnum):
     # History
     ACTIVITY_READ = "activity.read"
     AUDIT_READ = "audit.read"  # security-sensitive events (invitations) in the activity feed
+    # AI Core (PR 3.2). Owners and admins only for now; later milestones grant AI_USE to more roles.
+    AI_USE = "ai.use"  # send requests through the AI gateway
+    AI_MANAGE = "ai.manage"  # switch AI on/off, set the monthly budget, run the connection check
+    AI_USAGE_READ = "ai.usage.read"  # see AI usage, cost and the request log
 
 
 _EVERYONE = frozenset({Capability.WORKSPACE_READ, Capability.MEMBERS_READ, Capability.ACTIVITY_READ})
@@ -66,6 +70,9 @@ _ADMINISTER = frozenset(
         Capability.PROJECTS_MANAGE,
         Capability.APPROVALS_DECIDE,
         Capability.AUDIT_READ,
+        Capability.AI_USE,
+        Capability.AI_MANAGE,
+        Capability.AI_USAGE_READ,
     }
 )
 

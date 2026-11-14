@@ -162,3 +162,52 @@ def test_studio_migration_keeps_existing_data_and_rolls_back_cleanly(
 
     command.upgrade(config, "head")
     assert _count(empty_database, "SELECT count(*) FROM departments") == 7
+
+
+def test_ai_migration_seeds_the_default_catalogue(empty_database: Engine, test_database_url: str) -> None:
+    """Migration 0004 holds a frozen copy of the catalogue; it must match booski_core.modules.ai.catalog."""
+    from booski_core.modules.ai.catalog import DEFAULT_MODELS, DEFAULT_TASKS, DEFAULT_TIERS
+    from booski_core.modules.ai.pricing import Pricing
+
+    command.upgrade(alembic_config(test_database_url), "head")
+    with empty_database.connect() as connection:
+        models = {
+            row.model_key: row
+            for row in connection.execute(
+                text("SELECT provider, model_key, display_name, pricing FROM ai_models")
+            )
+        }
+        tiers = connection.execute(
+            text(
+                "SELECT t.tier, m.model_key, t.effort, t.max_tokens FROM ai_tiers t "
+                "JOIN ai_models m ON m.id = t.model_id ORDER BY t.tier"
+            )
+        ).all()
+        tasks = connection.execute(
+            text(
+                "SELECT task_key, tier, description, effort, max_tokens, model_id "
+                "FROM ai_tasks ORDER BY task_key"
+            )
+        ).all()
+
+    assert set(models) == {m.model_key for m in DEFAULT_MODELS}
+    for seed in DEFAULT_MODELS:
+        row = models[seed.model_key]
+        assert (row.provider, row.display_name) == (seed.provider, seed.display_name)
+        assert Pricing.model_validate(row.pricing) == Pricing.model_validate(seed.pricing)
+    assert sorted(tuple(row) for row in tiers) == sorted(
+        (t.tier, t.model_key, t.effort, t.max_tokens) for t in DEFAULT_TIERS
+    )
+    assert [tuple(row) for row in tasks] == sorted(
+        (t.task_key, t.tier, t.description, t.effort, t.max_tokens, None) for t in DEFAULT_TASKS
+    )
+
+
+def test_ai_migration_rolls_back_cleanly(empty_database: Engine, test_database_url: str) -> None:
+    config = alembic_config(test_database_url)
+    command.upgrade(config, "head")
+    command.downgrade(config, "0003")
+    tables = set(inspect(empty_database).get_table_names())
+    assert not tables & {"ai_models", "ai_tiers", "ai_tasks", "workspace_ai_settings", "ai_requests"}
+    command.upgrade(config, "head")
+    assert database_revisions(empty_database) == migration_heads()

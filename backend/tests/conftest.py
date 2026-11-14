@@ -20,10 +20,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import Engine, create_engine, make_url, text
 from sqlalchemy.orm import Session
 
+from ai_fakes import FakeProvider
 from booski_core.config import Environment, Settings
 from booski_core.main import create_app
 from booski_core.migrations_config import alembic_config, database_revisions, migration_heads
 from booski_core.models import Base
+from booski_core.modules.ai.catalog import seed_default_catalog
 from booski_core.security import passwords
 from helpers import Account, sign_in
 
@@ -126,6 +128,10 @@ def migrated_db(test_database_url: str) -> Iterator[Engine]:
         connection.execute(text("SET LOCAL session_replication_role = replica"))
         for table in reversed(Base.metadata.sorted_tables):
             connection.execute(table.delete())
+    # The AI catalogue is seeded by migration 0004; the wipe above removed it, so put it back.
+    with Session(engine) as session:
+        seed_default_catalog(session)
+        session.commit()
     try:
         yield engine
     finally:
@@ -133,8 +139,15 @@ def migrated_db(test_database_url: str) -> Iterator[Engine]:
 
 
 @pytest.fixture
-def app(migrated_db: Engine, db_settings: Settings) -> Iterator[FastAPI]:
+def fake_ai() -> FakeProvider:
+    """The AI provider every test app uses: no test ever calls a real provider."""
+    return FakeProvider()
+
+
+@pytest.fixture
+def app(migrated_db: Engine, db_settings: Settings, fake_ai: FakeProvider) -> Iterator[FastAPI]:
     application = create_app(db_settings)
+    application.state.ai_providers = {"anthropic": fake_ai}
     try:
         yield application
     finally:
