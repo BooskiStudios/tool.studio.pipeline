@@ -56,6 +56,10 @@
 | D37 | Refusal fallbacks off for now | Explicitly approved decision | Implemented (PR3.2) |
 | D38 | Questions to the human go through the pop-up, one at a time | Explicitly approved decision (working process) | In effect |
 | D39 | PR3.2 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.2 only) | Completed |
+| D40 | PR3.3 approved: backend only, no AI calls | Explicitly approved decision | In effect |
+| D41 | AI memory = curated memory entries + permission-aware full-text search | Explicitly approved decision + implementation choices | Implemented (PR3.3, awaiting review) |
+| D42 | Developers and above write memory entries | Explicitly approved decision | Implemented (PR3.3, awaiting review) |
+| D43 | Search and AI context draw on memory, documents and decisions | Explicitly approved decision | Implemented (PR3.3, awaiting review) |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -412,6 +416,39 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Decision:** PR #10 was merged into `main` with a **merge commit** (`1bad661`) after its CI passed, including the end-to-end journeys; marking PR3.2 Complete was done in a separate docs-only PR.
 - **Scope:** PR3.2 and its follow-up status PR only. Like D22, D24 and D30, it is **not** a standing rule.
 
+### D40 — PR3.3 approved: backend only, no AI calls
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answers "Backend only (Recommended)" (no web-app screens), "Not yet (Recommended)" (no "ask the knowledge base" endpoint), then "Approve and start (Recommended)".
+- **Decision:** PR3.3 (Persistent AI Memory & Knowledge) proceeds on `phase-3/pr3.3-ai-memory-knowledge` with the acceptance criteria in ROADMAP.md. It builds memory, search and context assembly, and makes **no AI calls**; the first feature that sends assembled context to a model comes with agents (PR3.4) or the command bar (PR3.8). No UI changes: memory and search screens come with PR3.8.
+
+### D41 — What AI memory is
+- **Category:** explicitly approved decision + implementation choices.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Memory entries + search (Recommended)".
+- **Decision:** a new set of short, curated **memory entries** (kinds: fact, convention, lesson, preference), scoped to the workspace, a project or a department, with provenance (who wrote and last changed it, when, and optionally the document or decision it came from), **plus** permission-aware full-text search across them and the existing knowledge, and context assembly within a token budget.
+- **Implementation choices (PR3.3, not separately approved):**
+  - PostgreSQL full-text search with generated `tsvector` columns and GIN indexes, English stemming (D-P3-5; English only, as assumed in A1's list). Queries use web-search syntax (words, "phrases", `or`, `-excluded`).
+  - Ranking: `ts_rank_cd` normalised to 0–1, then most recent; memory entries rank 1.5× higher because they are curated.
+  - A project (or department) filter returns that project's records **and** studio-wide ones.
+  - Documents are searched on their **current** revision (title and body) and summary; archived memory and documents are never returned.
+  - Context: up to 30 candidates, added in rank order; an item that doesn't fit is shortened if at least 40 tokens remain, otherwise left out. Budget 100–50,000 tokens, 4,000 by default.
+  - Token counts are a conservative estimate (3 characters per token, rounded up), so assembled context never exceeds the budget without calling the provider.
+  - Memory entries are up to 2,000 characters, versioned, archivable, and every change is in the activity log.
+  - The context preview (`POST /ai/context`) needs `ai.use` (owners and admins, D36); search needs only workspace membership.
+
+### D42 — Who writes memory entries
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Developers and above (Recommended)".
+- **Decision:** new capability `memory.write` for owners, admins and developers, the same people who write documents and decisions. Everyone in the workspace can read memory entries they can see. Project access narrows this as usual (viewer access to a project makes its memory read-only). AI-written memories are not part of PR3.3; they come with agents (PR3.4), behind approval.
+
+### D43 — What search and AI context draw on
+- **Category:** explicitly approved decision.
+- **Date:** 14 November 2026.
+- **Evidence:** pop-up answer "Memory, documents, decisions (Recommended)".
+- **Decision:** search and context assembly cover memory entries, knowledge documents and the Decision Log. Tasks and milestones are not included yet.
+
 ---
 
 ## Phase 3 direction (D-P3-1 – D-P3-13)
@@ -459,6 +496,9 @@ Notes for later review. None of these is a decision.
 - **D34:** reserving the worst-case cost of a request before running it, so the budget can never be exceeded.
 - **D35:** whether, and for how long, to store prompt and response content (PR3.3).
 - **D37:** turning on refusal fallbacks (PR3.4).
+- **D41:** embeddings or vector search, only if full-text search proves insufficient (D-P3-5); exact token counting.
+- **D42:** AI-suggested memory entries, saved only after human approval (PR3.4).
+- **D43:** adding tasks and milestones to search and context.
 
 ## Proposals — awaiting a decision
 

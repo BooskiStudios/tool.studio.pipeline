@@ -37,6 +37,7 @@ class Capability(StrEnum):
     # Knowledge and governance
     DOCUMENTS_WRITE = "documents.write"
     DECISIONS_WRITE = "decisions.write"
+    MEMORY_WRITE = "memory.write"  # add, edit and archive AI memory entries (PR 3.3)
     APPROVALS_REQUEST = "approvals.request"
     APPROVALS_REVIEW_ASSIGNED = "approvals.review_assigned"  # decide approvals assigned to you
     APPROVALS_DECIDE = "approvals.decide"  # decide any approval
@@ -57,6 +58,7 @@ _DEVELOP = frozenset(
         Capability.MILESTONES_WRITE,
         Capability.DOCUMENTS_WRITE,
         Capability.DECISIONS_WRITE,
+        Capability.MEMORY_WRITE,
         Capability.APPROVALS_REQUEST,
         Capability.APPROVALS_REVIEW_ASSIGNED,
     }

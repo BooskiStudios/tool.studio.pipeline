@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from booski_core.access.roles import Role
 from booski_core.core.request_meta import utcnow
 from booski_core.modules.ai.models import WorkspaceAiSettings
+from booski_core.modules.memory.models import Memory
 from booski_core.modules.workspaces.models import Invitation
 from booski_core.security.tokens import hash_token
 from helpers import sign_in
@@ -33,6 +34,7 @@ NOBODY: set[Role] = set()
 class World:
     s: Studio
     invitation_id: uuid.UUID
+    memory_id: uuid.UUID
 
 
 @dataclass(frozen=True)
@@ -343,6 +345,36 @@ MATRIX = [
     Case("GET", W + "/ai/catalog", ADMINS, 200, lambda w: f"{B}/ai/catalog"),
     Case("GET", W + "/ai/usage", ADMINS, 200, lambda w: f"{B}/ai/usage"),
     Case("GET", W + "/ai/requests", ADMINS, 200, lambda w: f"{B}/ai/requests"),
+    # ---- memory and retrieval (PR 3.3): developers and above write memory (D42)
+    Case("GET", W + "/memories", EVERYONE, 200, lambda w: f"{B}/memories"),
+    Case(
+        "POST",
+        W + "/memories",
+        DEVELOPERS,
+        201,
+        lambda w: f"{B}/memories",
+        lambda w: {"kind": "convention", "content": "Prefabs are named PF_Thing."},
+    ),
+    Case("GET", W + "/memories/{memory_id}", EVERYONE, 200, lambda w: f"{B}/memories/{w.memory_id}"),
+    Case(
+        "PATCH",
+        W + "/memories/{memory_id}",
+        DEVELOPERS,
+        200,
+        lambda w: f"{B}/memories/{w.memory_id}",
+        lambda w: {"content": "We use URP for every project."},
+    ),
+    Case(
+        "GET",
+        W + "/memories/{memory_id}/history",
+        EVERYONE,
+        200,
+        lambda w: f"{B}/memories/{w.memory_id}/history",
+    ),
+    Case("GET", W + "/search", EVERYONE, 200, lambda w: f"{B}/search?q=controller"),
+    Case(
+        "POST", W + "/ai/context", ADMINS, 200, lambda w: f"{B}/ai/context", lambda w: {"query": "controller"}
+    ),
 ]
 
 
@@ -359,8 +391,15 @@ def world(db: Session) -> World:
     )
     db.add(invitation)
     db.add(WorkspaceAiSettings(workspace_id=studio.workspace_id, enabled=True))
+    memory = Memory(
+        workspace_id=studio.workspace_id,
+        kind="fact",
+        content="We use URP.",
+        created_by_user_id=studio.members[Role.OWNER].id,
+    )
+    db.add(memory)
     db.commit()
-    return World(studio, invitation.id)
+    return World(studio, invitation.id, memory.id)
 
 
 def _call(client: TestClient, case: Case, world: World) -> int:
