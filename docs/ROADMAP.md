@@ -22,7 +22,7 @@ A planned or proposed item is **never** an approved task. Only the human moves a
 |---|---|---|
 | 1 | Frontend prototype | **Complete** |
 | 2 | Platform foundations (PR1, PR2.1–PR2.4) | **Complete** |
-| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0–PR3.3 are complete. No milestone is currently approved; PR3.4–PR3.8 are planned and not authorised. |
+| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0–PR3.3 are complete. PR3.4 is approved and awaiting review. PR3.5–PR3.8 are planned and not authorised. |
 | 4 | Game Development Intelligence | Planned (strategic) |
 | 5 | Concept Lab & Asset Production | Planned (strategic) |
 | 6 | Marketing Studio & Studio Operations | Planned (strategic) |
@@ -59,7 +59,7 @@ The original Phase 2 plan described PR2.1–PR2.6, but Phase 2 was delivered as 
 
 **Goal:** build the shared AI infrastructure: providers, memory, agents, tools, the Local Worker and Claude Code execution. Bring it into the existing interface.
 
-> **Phase 3 being "in progress" authorises only the milestones the human has explicitly approved:** PR3.0–PR3.3, all now complete. It does **not** authorise work on PR3.4 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
+> **Phase 3 being "in progress" authorises only the milestones the human has explicitly approved:** PR3.0–PR3.3 (complete) and PR3.4 (approved 15 November 2026, D45). It does **not** authorise work on PR3.5 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 
 **Dependencies:** each milestone builds on the ones before it. The diagram shows the proposed dependency order, implied by the agreed numbering. Confirm a milestone's exact dependencies when it is planned.
 
@@ -69,7 +69,7 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
                                      └──────────────────────▶ PR3.8 (needs 3.4 and 3.5; 3.7 for execution views)
 ```
 
-> **Acceptance criteria for PR3.4–PR3.8 are *proposed*.** (PR3.1's, PR3.2's and PR3.3's were agreed when they were approved.) They are derived from each milestone's agreed capability list. Confirm and refine them with the human when the milestone is planned, before it moves to *In progress*.
+> **Acceptance criteria for PR3.5–PR3.8 are *proposed*.** (PR3.1's to PR3.4's were agreed when they were approved.) They are derived from each milestone's agreed capability list. Confirm and refine them with the human when the milestone is planned, before it moves to *In progress*.
 
 ### PR3.0 — Booski Blueprint & Project Documentation · Complete
 - **Purpose:** make the repository the permanent source of truth, so a fresh Claude Code session understands the product, the plan and the state.
@@ -154,19 +154,28 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
 - **Branch:** `phase-3/pr3.3-ai-memory-knowledge`.
 - **Delivered:** commit `87ea2cb`; merged on 14 November 2026 through PR #12 with a merge commit, `39ae4ab` (D44). CI: PR runs 43649601040 and 43649605521 ✅ (including the end-to-end journeys); `main` run 43650005302 ✅. Status marked Complete in a follow-up docs-only PR (`phase-3/pr3.3-status-complete`).
 
-### PR3.4 — Agent Framework & Orchestration · Planned
-- **Scope:**
-  - Agent definitions (role, responsibilities, configuration).
-  - Task assignment and delegation.
-  - Multi-step plans with shared context.
-  - Execution history and progress tracking.
-  - Retry and recovery; human intervention.
-- **Proposed to absorb (not yet agreed):** the Phase 2 plan's agent registry.
+### PR3.4 — Agent Framework & Orchestration · Awaiting review
+- **Scope (backend only, no tools, D45):**
+  - Agent definitions as per-workspace configurations (D47): role guidance, responsibilities, "must not" rules, allowed delegates, AI task, autonomy (levels 1–2), step and cost limits. Four starter agents (D48).
+  - Agent runs: plan → steps (with delegation to allowed colleagues) → final deliverable, each AI call through the gateway with permission-aware context.
+  - Execution in a separate `booski agent-worker` process with leases, retries and crash recovery (D46).
+  - Execution history (append-only run events) and progress; human control: pause, resume, cancel, redirect (D50).
+  - Outputs reviewed through an "AI output" approval; people apply them (D49).
+- **Absorbed:** the Phase 2 plan's agent registry (now per-workspace agents).
+- **Out of scope:** tools and record writes (PR3.5), Unity/Git/Claude Code (PR3.6–PR3.7), UI (PR3.8), AI-suggested memories (D51), refusal fallbacks (D37).
 - **Dependencies:** PR3.2, PR3.3. Informed by PR3.1.
-- **Proposed acceptance criteria:**
-  - Agents are configurations (D-P3-3) and act with no more than the starting user's permissions.
-  - Runs are recorded and auditable.
-  - A human can pause, stop or redirect a run.
+- **Acceptance criteria (agreed, D45):**
+  1. Agents are configurations, and a run never exceeds its starter's permissions (tested).
+  2. Runs and steps are recorded, auditable and visible only to people allowed to see them.
+  3. A human can pause, resume, cancel and redirect a run (tested).
+  4. Delegation is limited to the agent's allowed targets.
+  5. Step and cost limits are enforced, along with the workspace budget.
+  6. Failed steps retry, and interrupted runs recover (tested).
+  7. All tests use a fake AI provider.
+  8. The migration is reversible, and the permission matrix covers every new route.
+  9. The CCGS acknowledgement is updated (D28).
+  10. CI passes and the docs and decisions are updated.
+- **Branch:** `phase-3/pr3.4-agent-framework`.
 
 ### PR3.5 — Tools, Permissions & Execution · Planned
 - **Scope:**

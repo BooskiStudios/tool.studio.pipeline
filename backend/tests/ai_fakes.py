@@ -1,5 +1,6 @@
 """A scriptable stand-in for an AI provider. Tests never call a real provider."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from booski_core.modules.ai.pricing import TokenUsage
@@ -19,9 +20,16 @@ class FakeProvider:
     result: AiResult = DEFAULT_RESULT
     error: ProviderError | None = None
     calls: list[AiCall] = field(default_factory=list)
+    # Optional scripting: errors raised first, one per call, then ``responder`` builds each result.
+    errors: list[ProviderError] = field(default_factory=list)
+    responder: Callable[[AiCall], AiResult] | None = None
 
     def complete(self, call: AiCall) -> AiResult:
         self.calls.append(call)
         if self.error is not None:
             raise self.error
+        if self.errors:
+            raise self.errors.pop(0)
+        if self.responder is not None:
+            return self.responder(call)
         return self.result

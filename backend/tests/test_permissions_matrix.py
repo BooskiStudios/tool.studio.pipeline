@@ -10,10 +10,12 @@ from dataclasses import dataclass
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from booski_core.access.roles import Role
 from booski_core.core.request_meta import utcnow
+from booski_core.modules.agents.models import Agent, AgentRun
 from booski_core.modules.ai.models import WorkspaceAiSettings
 from booski_core.modules.memory.models import Memory
 from booski_core.modules.workspaces.models import Invitation
@@ -35,6 +37,8 @@ class World:
     s: Studio
     invitation_id: uuid.UUID
     memory_id: uuid.UUID
+    run_id: uuid.UUID  # queued, started by the owner
+    paused_run_id: uuid.UUID  # paused, started by the owner
 
 
 @dataclass(frozen=True)
@@ -373,7 +377,77 @@ MATRIX = [
     ),
     Case("GET", W + "/search", EVERYONE, 200, lambda w: f"{B}/search?q=controller"),
     Case(
-        "POST", W + "/ai/context", ADMINS, 200, lambda w: f"{B}/ai/context", lambda w: {"query": "controller"}
+        "POST",
+        W + "/ai/context",
+        DEVELOPERS,
+        200,
+        lambda w: f"{B}/ai/context",
+        lambda w: {"query": "controller"},
+    ),
+    # ---- agents and agent runs (PR 3.4): developers may start runs (D50); owners and admins configure
+    # agents and control anyone's runs; whoever started a run (the owner here) controls it too.
+    Case("GET", W + "/agents", EVERYONE, 200, lambda w: f"{B}/agents"),
+    Case(
+        "POST",
+        W + "/agents",
+        ADMINS,
+        201,
+        lambda w: f"{B}/agents",
+        lambda w: {"key": "level-designer", "name": "Level Designer"},
+    ),
+    Case("GET", W + "/agents/{agent_key}", EVERYONE, 200, lambda w: f"{B}/agents/producer"),
+    Case(
+        "PATCH",
+        W + "/agents/{agent_key}",
+        ADMINS,
+        200,
+        lambda w: f"{B}/agents/producer",
+        lambda w: {"max_steps": 5},
+    ),
+    Case("GET", W + "/agent-runs", EVERYONE, 200, lambda w: f"{B}/agent-runs"),
+    Case(
+        "POST",
+        W + "/agent-runs",
+        DEVELOPERS,
+        201,
+        lambda w: f"{B}/agent-runs",
+        lambda w: {"agent": "producer", "goal": "Plan the vertical slice"},
+    ),
+    Case("GET", W + "/agent-runs/{run_id}", EVERYONE, 200, lambda w: f"{B}/agent-runs/{w.run_id}"),
+    Case(
+        "GET", W + "/agent-runs/{run_id}/events", EVERYONE, 200, lambda w: f"{B}/agent-runs/{w.run_id}/events"
+    ),
+    Case(
+        "POST",
+        W + "/agent-runs/{run_id}/pause",
+        ADMINS,
+        200,
+        lambda w: f"{B}/agent-runs/{w.run_id}/pause",
+        lambda w: {},
+    ),
+    Case(
+        "POST",
+        W + "/agent-runs/{run_id}/resume",
+        ADMINS,
+        200,
+        lambda w: f"{B}/agent-runs/{w.paused_run_id}/resume",
+        lambda w: {},
+    ),
+    Case(
+        "POST",
+        W + "/agent-runs/{run_id}/cancel",
+        ADMINS,
+        200,
+        lambda w: f"{B}/agent-runs/{w.run_id}/cancel",
+        lambda w: {},
+    ),
+    Case(
+        "POST",
+        W + "/agent-runs/{run_id}/redirect",
+        ADMINS,
+        200,
+        lambda w: f"{B}/agent-runs/{w.run_id}/redirect",
+        lambda w: {"instruction": "Focus on combat."},
     ),
 ]
 
@@ -398,8 +472,22 @@ def world(db: Session) -> World:
         created_by_user_id=studio.members[Role.OWNER].id,
     )
     db.add(memory)
+    producer = db.scalars(
+        select(Agent).where(Agent.workspace_id == studio.workspace_id, Agent.key == "producer")
+    ).one()
+    runs = [
+        AgentRun(
+            workspace_id=studio.workspace_id,
+            agent_id=producer.id,
+            started_by_user_id=studio.members[Role.OWNER].id,
+            goal="Plan the alpha",
+            status=status,
+        )
+        for status in ("queued", "paused")
+    ]
+    db.add_all(runs)
     db.commit()
-    return World(studio, invitation.id, memory.id)
+    return World(studio, invitation.id, memory.id, runs[0].id, runs[1].id)
 
 
 def _call(client: TestClient, case: Case, world: World) -> int:

@@ -52,7 +52,7 @@
 | D33 | Task-based model routing with tier defaults (Haiku / Sonnet / Opus 5.5) | Explicitly approved decision + implementation choices | Implemented (PR3.2) |
 | D34 | AI off by default per workspace; monthly budget, $20 suggested | Explicitly approved decision | Implemented (PR3.2) |
 | D35 | AI request log stores metadata only, not prompts or responses | Explicitly approved decision | Implemented (PR3.2) |
-| D36 | Only owners and admins manage, view and use AI for now | Explicitly approved decision | Implemented (PR3.2) |
+| D36 | Only owners and admins manage, view and use AI for now | Explicitly approved decision | Implemented (PR3.2); `ai.use` part superseded by D50 |
 | D37 | Refusal fallbacks off for now | Explicitly approved decision | Implemented (PR3.2) |
 | D38 | Questions to the human go through the pop-up, one at a time | Explicitly approved decision (working process) | In effect |
 | D39 | PR3.2 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.2 only) | Completed |
@@ -61,6 +61,14 @@
 | D42 | Developers and above write memory entries | Explicitly approved decision | Implemented (PR3.3) |
 | D43 | Search and AI context draw on memory, documents and decisions | Explicitly approved decision | Implemented (PR3.3) |
 | D44 | PR3.3 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.3 only) | Completed |
+| D45 | PR3.4 approved: agents plan, review and draft; no tools | Explicitly approved decision | In effect |
+| D46 | Agent runs execute in a separate `booski agent-worker` process | Explicitly approved decision + implementation choices | Implemented (PR3.4, awaiting review) |
+| D47 | Agents are per-workspace configurations, seeded from defaults | Explicitly approved decision | Implemented (PR3.4, awaiting review) |
+| D48 | Starter agents: Producer, Technical Director, Game Designer, QA Lead | Explicitly approved decision + implementation choices | Implemented (PR3.4, awaiting review) |
+| D49 | Agent outputs are reviewed through an "AI output" approval; people apply them | Explicitly approved decision | Implemented (PR3.4, awaiting review) |
+| D50 | Developers may use AI and start agent runs (supersedes part of D36) | Explicitly approved decision | Implemented (PR3.4, awaiting review) |
+| D51 | Agents don't suggest memory entries yet | Explicitly approved decision | In effect |
+| D52 | Examples and summaries go inside the question pop-up | Explicitly approved decision (working process) | In effect |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -392,6 +400,7 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Decision:** `ai_requests` records who, workspace and project, task, tier, model, effort, outcome, error or refusal category, tokens, cost, duration and request ids, but **not** prompt or response text. The log is append-only (a database trigger rejects changes). Whether to store content is revisited in PR3.3.
 
 ### D36 — Who can manage, see and use AI
+- **Status:** the `ai.use` part is **superseded by D50** (15 November 2026): developers may use AI too. The rest stands.
 - **Category:** explicitly approved decision.
 - **Date:** 14 November 2026.
 - **Evidence:** pop-up answer "Owners & admins (Recommended)".
@@ -457,6 +466,61 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Decision:** PR #12 was merged into `main` with a **merge commit** (`39ae4ab`) after its CI passed, including the end-to-end journeys; marking PR3.3 Complete was done in a separate docs-only PR.
 - **Scope:** PR3.3 and its follow-up status PR only. Like D22, D24, D30 and D39, it is **not** a standing rule.
 
+### D45 — PR3.4 approved
+- **Category:** explicitly approved decision.
+- **Date:** 15 November 2026.
+- **Evidence:** pop-up answers to decisions D46–D51, then "Approve and start (Recommended)".
+- **Decision:** PR3.4 (Agent Framework & Orchestration) proceeds on `phase-3/pr3.4-agent-framework` with the acceptance criteria in ROADMAP.md. Backend only. Agents can plan, review and draft but have **no tools** (PR3.5+): they never change studio records. Only autonomy levels 1–2 (Assist, Execute with approval) can be configured. Tests use a fake AI provider; refusal fallbacks stay off (D37).
+
+### D46 — Where agent runs execute
+- **Category:** explicitly approved decision + implementation choices.
+- **Date:** 15 November 2026.
+- **Evidence:** pop-up answer "Separate worker process (Recommended)".
+- **Decision:** agent runs are queued in PostgreSQL and executed by a separate process, `booski agent-worker` (same code and image; a third service in Docker Compose). No message broker (D-P3-2).
+- **Implementation choices (PR3.4):**
+  - Workers claim the oldest queued run with `FOR UPDATE SKIP LOCKED` and a 10-minute lease, renewed after each step; several workers can run side by side.
+  - A run whose worker crashes is claimed again once its lease expires and continues from its last completed step; after 3 claims it is failed (`too_many_attempts`).
+  - Each unit of work (plan, one step, the final deliverable) is committed separately.
+  - Transient provider failures (timeout, rate limit, overload, connection) are retried up to 3 times with 2 s / 4 s backoff; other failures stop the run with a reason.
+  - Before every unit the worker re-checks the run's status, the starter's **current** membership and `ai.use` for the run's project, the agent being active, and the agent's step and cost limits. The workspace's AI switch and monthly budget apply through the gateway.
+
+### D47 — Agents are per-workspace configurations
+- **Category:** explicitly approved decision.
+- **Date:** 15 November 2026.
+- **Evidence:** pop-up answer "Per workspace, from defaults (Recommended)".
+- **Decision:** each workspace has its own agents, seeded with the starter agents when it is created (existing workspaces by migration 0006). Owners and admins (`agents.manage`) can edit, switch off and add agents; changes are in the activity log.
+
+### D48 — Starter agents
+- **Category:** explicitly approved decision + implementation choices.
+- **Date:** 15 November 2026.
+- **Evidence:** pop-up answer "Small starter set (Recommended)".
+- **Decision:** four starter agents that are useful without tools: **Producer** (plans; may delegate to the other three), **Technical Director** (reviews), **Game Designer** (drafts designs) and **QA Lead** (drafts test plans).
+- **Implementation choices:** AI tasks `plan` (Producer), `review` (Technical Director), `draft` (Game Designer, QA Lead); step limits 8 / 5 / 6 / 6; cost limits per run $1.00 / $1.00 / $0.50 / $0.50; departments Studio Operations, Game Development, Concept Lab, Quality & Oversight. Roles, "must not" lists and delegation maps adapt ideas from the CCGS audit (ACKNOWLEDGEMENTS.md, D28).
+
+### D49 — What happens to agent outputs
+- **Category:** explicitly approved decision.
+- **Date:** 15 November 2026.
+- **Evidence:** pop-up answer "Review, then you apply it (Recommended)".
+- **Decision:** a finished run's deliverable is saved on the run and, for agents at "Execute with approval", raises an **"AI output" approval**. People approve or reject it and apply what's useful themselves; agents write nothing to studio records. The approval is requested by the agent (no requesting user), so anyone allowed to decide approvals, including the person who started the run, can review it. "Assist" agents save their answer without an approval.
+
+### D50 — Developers may use AI
+- **Category:** explicitly approved decision. **Supersedes part of D36.**
+- **Date:** 15 November 2026.
+- **Evidence:** pop-up answer "Developers too", to the question of who may start and control agent runs.
+- **Decision:** `ai.use` is granted to developers as well as owners and admins: they may start agent runs and preview AI context. A run can be controlled (pause, resume, cancel, redirect) by the person who started it, and by owners and admins (`agents.manage`). Settings, the connection check, usage and cost (`ai.manage`, `ai.usage.read`) stay with owners and admins, as D36 decided. The workspace's monthly budget still caps spending.
+
+### D51 — No AI-suggested memory entries yet
+- **Category:** explicitly approved decision.
+- **Date:** 15 November 2026.
+- **Evidence:** pop-up answer "Not yet (Recommended)", after examples were shown in the pop-up.
+- **Decision:** agents read memory (through context assembly) but don't propose memory entries. People write memory (D42). Revisit once agents are in real use.
+
+### D52 — Examples go inside the question pop-up
+- **Category:** explicitly approved decision (working process).
+- **Date:** 15 November 2026.
+- **Evidence:** the human couldn't see examples written above a pop-up ("I can't see the examples").
+- **Decision:** the pop-up hides the chat while it is open, so anything needed to answer (examples, a plan summary, trade-offs) goes inside the pop-up: its question text, option descriptions or option previews. Recorded in `CLAUDE.md` §4, extending D38.
+
 ---
 
 ## Phase 3 direction (D-P3-1 – D-P3-13)
@@ -507,6 +571,10 @@ Notes for later review. None of these is a decision.
 - **D41:** embeddings or vector search, only if full-text search proves insufficient (D-P3-5); exact token counting.
 - **D42:** AI-suggested memory entries, saved only after human approval (PR3.4).
 - **D43:** adding tasks and milestones to search and context.
+- **D46:** separate retry policies per error type; a dead-letter view for failed runs.
+- **D48:** more agents as tools arrive (the toolkit spec's Wave 1, PR3.5–PR3.7); tuning each agent's task, limits and guidance from real runs.
+- **D49:** turning an approved output into records automatically (needs tools, PR3.5).
+- **D51:** agents suggesting memory entries, saved only after human approval.
 
 ## Proposals — awaiting a decision
 

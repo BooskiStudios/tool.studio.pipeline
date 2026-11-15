@@ -9,11 +9,11 @@ const EVERYONE: Capability[] = ["workspace.read", "members.read", "activity.read
 const COLLABORATE: Capability[] = ["tasks.create", "comments.write"];
 const DEVELOP: Capability[] = [
   "tasks.edit_any", "milestones.write", "documents.write", "decisions.write", "memory.write", "approvals.request",
-  "approvals.review_assigned",
+  "approvals.review_assigned", "ai.use",
 ];
 const ADMINISTER: Capability[] = [
   "workspace.update", "members.manage", "invitations.manage", "departments.manage", "projects.manage", "approvals.decide",
-  "audit.read", "ai.use", "ai.manage", "ai.usage.read",
+  "audit.read", "ai.manage", "ai.usage.read", "agents.manage",
 ];
 
 export const ROLE_CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {

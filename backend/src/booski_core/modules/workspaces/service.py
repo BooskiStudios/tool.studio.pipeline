@@ -14,6 +14,7 @@ from booski_core.config import Settings
 from booski_core.core.errors import ProblemError
 from booski_core.core.request_meta import RequestMeta
 from booski_core.modules.activity.service import record_event
+from booski_core.modules.agents.defaults import seed_default_agents
 from booski_core.modules.departments.service import seed_default_departments
 from booski_core.modules.identity.models import User
 from booski_core.modules.identity.service import get_user_by_email, set_password
@@ -51,6 +52,8 @@ def create_workspace(
     membership = Membership(workspace_id=workspace.id, user_id=owner.id, role=Role.OWNER.value)
     db.add(membership)
     seed_default_departments(db, workspace.id)
+    db.flush()
+    seed_default_agents(db, workspace.id)  # needs the departments flushed (PR 3.4)
     db.flush()
     record_event(
         db,

@@ -1,6 +1,7 @@
 """The ``booski`` command: run the API, manage the database schema and provision accounts.
 
-``booski ai`` seeds the AI catalogue and checks the AI provider key (PR 3.2).
+``booski ai`` seeds the AI catalogue and checks the AI provider key (PR 3.2). ``booski agent-worker`` runs
+queued agent runs (PR 3.4).
 
 ``booski backup`` creates, verifies and restores database backups (see backend/DEPLOYMENT.md).
 """
@@ -239,6 +240,30 @@ def _ai_check(db: Session, settings: Settings) -> int:
     return 0 if not result.refused else 1
 
 
+def _agent_worker(args: argparse.Namespace) -> int:
+    from booski_core.db import create_db_engine, create_session_factory
+    from booski_core.modules.agents.worker import serve
+    from booski_core.modules.ai.providers import build_providers
+
+    settings = get_settings()
+    logging.basicConfig(
+        level=settings.log_level.upper(), format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
+    engine = create_db_engine(settings)
+    try:
+        serve(
+            create_session_factory(engine),
+            build_providers(settings),
+            poll_seconds=args.poll_seconds,
+            once=args.once,
+        )
+    except KeyboardInterrupt:
+        pass
+    finally:
+        engine.dispose()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="booski", description="Booski Core command-line tools.")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -337,6 +362,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Send one tiny request to the configured AI provider (costs a fraction of a cent).",
     )
     ai_parser.set_defaults(handler=_ai)
+
+    worker = commands.add_parser(
+        "agent-worker", help="Run queued agent runs (PR 3.4). Keep it running alongside the API."
+    )
+    worker.add_argument("--poll-seconds", type=float, default=2.0, help="Wait between checks when idle.")
+    worker.add_argument("--once", action="store_true", help="Work through the queue, then exit.")
+    worker.set_defaults(handler=_agent_worker)
 
     return parser
 

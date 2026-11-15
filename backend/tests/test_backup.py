@@ -108,6 +108,7 @@ def test_restore_into_an_empty_database_reproduces_the_data(
         "document_revisions_append_only",
         "approval_reviews_append_only",
         "ai_requests_append_only",
+        "agent_run_events_append_only",
     }
 
 

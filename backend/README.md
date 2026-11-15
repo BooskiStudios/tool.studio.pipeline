@@ -52,6 +52,8 @@ Everything lives under `/api/v1/w/{workspace_slug}` and is only visible to membe
 | Activity | `GET /activity` (filters: project, entity_type, entity_id, actor, verb, since, until) |
 | Memory (PR 3.3) | `GET`/`POST /memories` (filters: project, department, kind, archived) · `GET`/`PATCH /memories/{id}` · `GET /memories/{id}/history` |
 | Search (PR 3.3) | `GET /search?q=` (memory, documents, decisions; filters: project, department, type, limit) — full-text, only what you can see |
+| Agents (PR 3.4) | `GET`/`POST /agents` · `GET`/`PATCH /agents/{key}` |
+| Agent runs (PR 3.4) | `GET`/`POST /agent-runs` (filters: status, agent, project) · `GET /agent-runs/{id}` · `GET /agent-runs/{id}/events` · `POST /agent-runs/{id}/pause · resume · cancel · redirect` |
 | AI (PR 3.2) | `GET`/`PATCH /ai/settings` (on/off, monthly budget) · `POST /ai/check` (one tiny request through the gateway) · `GET /ai/catalog` (models, prices, tiers, tasks) · `GET /ai/usage?month=YYYY-MM` · `GET /ai/requests` · `POST /ai/context` (preview the knowledge an AI request would get, within a token budget; PR 3.3) |
 
 **Who can do what** (the backend enforces all of it):
@@ -66,7 +68,8 @@ Everything lives under `/api/v1/w/{workspace_slug}` and is only visible to membe
 | Decide approvals | ✓ | ✓ | when assigned | – | – |
 | Projects, workstreams, project access, departments | ✓ | ✓ | – | – | – |
 | See invitation events in the activity feed | ✓ | ✓ | – | – | – |
-| AI settings, usage and cost; use AI | ✓ | ✓ | – | – | – |
+| Use AI: start agent runs, preview AI context | ✓ | ✓ | ✓ | – | – |
+| AI settings, usage and cost; configure agents; control anyone's agent runs | ✓ | ✓ | – | – | – |
 
 Project rules narrow these, never widen them: a **restricted** project is invisible (404) to everyone except owners, admins and its access list, and **viewer** project access makes a project read-only for that person. Nobody can decide their own approval request.
 

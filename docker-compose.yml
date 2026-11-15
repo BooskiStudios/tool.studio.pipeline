@@ -45,6 +45,7 @@ services:
     environment:
       BOOSKI_DATABASE_URL: *database-url
       BOOSKI_ENVIRONMENT: ${BOOSKI_ENVIRONMENT:-development}
+      BOOSKI_ANTHROPIC_API_KEY: ${BOOSKI_ANTHROPIC_API_KEY:-} # optional; empty means no AI provider
     ports:
       - "127.0.0.1:8000:8000" # this machine only; put an HTTPS reverse proxy in front before exposing it
     depends_on:
@@ -52,6 +53,24 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
     stop_grace_period: 15s # in-flight requests finish before the container stops
+
+  # Runs queued agent runs (PR 3.4). Same image and database as the API; no ports. The AI key comes from
+  # the environment (or a git-ignored .env next to this file); without it, agent runs fail with
+  # "provider_not_configured".
+  agent-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["booski", "agent-worker"]
+    environment:
+      BOOSKI_DATABASE_URL: *database-url
+      BOOSKI_ENVIRONMENT: ${BOOSKI_ENVIRONMENT:-development}
+      BOOSKI_ANTHROPIC_API_KEY: ${BOOSKI_ANTHROPIC_API_KEY:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    stop_grace_period: 30s # a run stopped mid-step is resumed from its last completed step
 
 volumes:
   pgdata:

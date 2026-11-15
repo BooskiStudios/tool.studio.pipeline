@@ -48,3 +48,12 @@ def test_check_reports_model_tokens_and_cost(
     assert cli.main(["ai", "check"]) == 0
     assert "Claude Haiku 5.5 answered: 12 input and 4 output tokens, $0.000003." in capsys.readouterr().out
     assert [call.model_key for call in fake.calls] == ["claude-haiku-5-5"]
+
+
+@pytest.mark.parametrize("value", ["", "   "])
+def test_a_blank_key_means_no_provider(value: str) -> None:
+    from booski_core.modules.ai.providers import build_providers
+
+    settings = Settings(anthropic_api_key=value)
+    assert settings.anthropic_api_key is None
+    assert build_providers(settings) == {}
