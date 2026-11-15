@@ -211,3 +211,30 @@ def test_ai_migration_rolls_back_cleanly(empty_database: Engine, test_database_u
     assert not tables & {"ai_models", "ai_tiers", "ai_tasks", "workspace_ai_settings", "ai_requests"}
     command.upgrade(config, "head")
     assert database_revisions(empty_database) == migration_heads()
+
+
+def test_agents_migration_gives_existing_workspaces_the_starter_agents(
+    empty_database: Engine, test_database_url: str
+) -> None:
+    from booski_core.modules.agents.defaults import DEFAULT_AGENTS
+
+    config = alembic_config(test_database_url)
+    command.upgrade(config, "0002")
+    _seed_pr22_data(empty_database)
+    command.upgrade(config, "0005")
+    command.upgrade(config, "0006")
+
+    with empty_database.connect() as connection:
+        rows = connection.execute(
+            text(
+                "SELECT a.key, a.task_key, a.delegates_to, d.slug FROM agents a "
+                "LEFT JOIN departments d ON d.id = a.department_id ORDER BY a.key"
+            )
+        ).all()
+    expected = sorted((d.key, d.task_key, list(d.delegates_to), d.department_slug) for d in DEFAULT_AGENTS)
+    assert [tuple(r) for r in rows] == expected
+
+    command.downgrade(config, "0005")
+    assert not (_tables(empty_database) & {"agents", "agent_runs", "agent_run_events"})
+    assert _count(empty_database, "SELECT count(*) FROM departments") == 7  # earlier data untouched
+    command.upgrade(config, "head")

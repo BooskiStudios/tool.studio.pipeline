@@ -115,7 +115,7 @@ None of these exists:
 
 ## 6. AI Core (Partially built: PR3.2)
 
-> **Two layers exist:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings (PR3.2); and memory entries, permission-aware search and context assembly (PR3.3). There is **no** agent, orchestration, tool execution or chat, and nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
+> **Three layers exist:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings (PR3.2); memory entries, permission-aware search and context assembly (PR3.3); and agents with orchestrated runs executed by the agent worker (PR3.4, awaiting review). There is **no** tool execution or chat: agents can plan, review and draft but change nothing. Nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
 
 **Placement (built):** inside Booski Core as a new module, `backend/src/booski_core/modules/ai/`, not a separate service (D-P3-2).
 
@@ -152,13 +152,34 @@ There is deliberately **no** general chat endpoint: features built in later mile
 | Search | `modules/retrieval/search.py` · `GET /search` | Ranked full-text search across memory, current document revisions and decisions (D43), scoped exactly like each record's own endpoints: workspace, `project_scope` for restricted projects, archived items excluded. Every result carries its source (type, id, title, API path, version or revision). |
 | Context assembly | `modules/retrieval/context.py` · `POST /ai/context` (preview) | Best matches in rank order within a token budget (conservative estimate), shortening or leaving out what doesn't fit; each block cites its source. For agents to call from PR3.4; it sends nothing to a provider. |
 
+### Built in PR3.4: agents and orchestration (awaiting review)
+
+```
+person (developer+) ── POST /agent-runs ──▶ agent_runs (queued)
+booski agent-worker ── claim (SKIP LOCKED, 10-min lease) ──▶ Orchestrator
+   re-check: run status · starter's current ai.use · agent active · step & cost limits
+   1. plan    (agent's AI task; context from memory/documents/decisions) ─▶ steps
+   2. steps   (each by the agent or an allowed colleague; earlier results + people's notes)
+   3. final deliverable ─▶ run.output ─▶ "AI output" approval for people to review
+   every AI call: gateway (budget, routing, cost log) · every change: agent_run_events (append-only)
+```
+
+| Part | Where | What it does |
+|---|---|---|
+| Agents | `agents` (workspace-owned) · `modules/agents/defaults.py` | Configurations (D-P3-3): guidance, responsibilities, "must not" rules, allowed delegates, AI task, autonomy (Assist / Execute with approval), step and cost limits. Seeded per workspace (D47, D48); `agents.manage` for owners and admins. |
+| Runs | `agent_runs` · `POST /agent-runs` | A goal for an agent, optionally tied to a project or task, started by a developer or above (D50). Holds the plan, step outputs, people's notes, cost, status and lease. Visible like any project-scoped record. |
+| Orchestrator | `modules/agents/orchestrator.py` | One unit of work per transaction (plan, a step, the final deliverable); re-checks permissions and limits before each; retries transient provider failures; never writes studio records. |
+| Worker | `booski agent-worker` · `modules/agents/worker.py` | Claims runs with leases; resumes runs whose worker died; fails runs after 3 interrupted attempts (D46). A Compose service of its own. |
+| History | `agent_run_events` (append-only) | Created, claimed, planned, step started/completed/retried/failed, paused, resumed, redirected, cancelled, completed, failed, review requested; links to the AI request of each call. |
+| Human control | `/agent-runs/{id}/pause · resume · cancel · redirect` | The starter, owners and admins. Pausing takes effect after the current step; redirect notes are followed from the next step on. |
+
 ### Planned layers, in roadmap order
 
 | Layer | Milestone | Intent |
 |---|---|---|
 | Providers and models | PR3.2 | **Built**, see above. Not yet: other providers, per-agent cost (no agents exist), per-workspace routing. |
 | Memory and knowledge | PR3.3 | **Built**, see above. Not yet: AI-written memories (PR3.4), tasks and milestones as sources, embeddings. |
-| Agents and orchestration | PR3.4 | Agents as **configurations** (role, instructions, tools, knowledge, model, quality and escalation rules) on shared orchestration: task assignment, delegation, multi-step plans, execution history, retry and recovery, human intervention (D-P3-3). |
+| Agents and orchestration | PR3.4 | **Built (awaiting review)**, see above. Not yet: tools (PR3.5), autonomy levels 3–4, AI-suggested memories (D51), agent evaluations against real models. |
 | Tools and execution | PR3.5 | Tool registry with schemas; permission-aware execution scoped to workspace and project; approval requirements; sandboxing, timeouts and limits; destructive-action protection. Starts with knowledge retrieval and existing platform capabilities. |
 | Command Centre and AI Workforce | PR3.8 | Connects the existing interface: command bar, workforce dashboard, live progress, approvals, usage and cost, errors and human controls. |
 

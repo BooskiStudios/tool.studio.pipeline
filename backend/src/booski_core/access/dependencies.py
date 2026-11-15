@@ -5,16 +5,19 @@
 * A member whose role lacks the capability → 403.
 """
 
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 from fastapi import Depends
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from booski_core.access.roles import Capability, Role, has_capability
 from booski_core.core.errors import ProblemError
 from booski_core.modules.identity.dependencies import AuthContext, CurrentAuth, DbSession
+from booski_core.modules.identity.models import User
 from booski_core.modules.workspaces.models import Membership, Workspace
 
 WORKSPACE_NOT_FOUND = "Workspace not found."
@@ -58,3 +61,32 @@ def require(capability: Capability) -> Callable[..., WorkspaceContext]:
 
 
 MemberContext = Annotated[WorkspaceContext, Depends(get_workspace_context)]
+
+
+def member_context(
+    db: Session, workspace_id: uuid.UUID, user_id: uuid.UUID | None
+) -> WorkspaceContext | None:
+    """The context of a workspace member, for background work done on their behalf (agent runs).
+
+    Built from their **current** membership and role, so a member who has left, been deactivated or lost
+    a role loses the work's permissions at once. There is no web session: ``auth.session`` is None and
+    must not be used by background code. Returns None if they are no longer an active member.
+    """
+    if user_id is None:
+        return None
+    row = db.execute(
+        select(User, Workspace, Membership)
+        .join(Membership, Membership.user_id == User.id)
+        .join(Workspace, Workspace.id == Membership.workspace_id)
+        .where(
+            User.id == user_id,
+            User.is_active.is_(True),
+            Workspace.id == workspace_id,
+            Workspace.archived_at.is_(None),
+        )
+    ).one_or_none()
+    if row is None:
+        return None
+    user, workspace, membership = row
+    auth = AuthContext(user=user, session=cast(Any, None))
+    return WorkspaceContext(auth=auth, workspace=workspace, membership=membership)

@@ -291,11 +291,11 @@ def test_small_budgets_shorten_or_leave_out_items(
 
 
 def test_context_is_for_ai_users_only(signed_in: SignedIn, studio: Studio) -> None:
-    # Context uses the same permission-aware search; AI use is owners and admins only for now (D36).
+    # Context uses the same permission-aware search; AI use is for developers and above (D50).
     owner = signed_in(studio.members[Role.OWNER])
     assert "Horizon prefabs" in _context(owner, query="prefabs")["rendered"]
-    developer = signed_in(studio.members[Role.DEVELOPER])
-    assert developer.post(f"{B}/ai/context", json={"query": "prefabs"}).status_code == 403
+    collaborator = signed_in(studio.members[Role.COLLABORATOR])
+    assert collaborator.post(f"{B}/ai/context", json={"query": "prefabs"}).status_code == 403
 
 
 @pytest.mark.parametrize("budget", [99, 50_001])

@@ -10,6 +10,7 @@ Ranking: PostgreSQL ``ts_rank_cd`` (normalised to 0..1), then most recently upda
 curated, so they rank a little higher (``MEMORY_BOOST``).
 """
 
+import re
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, replace
@@ -59,8 +60,21 @@ class Hit:
     path: str = ""  # the API path of the source record
 
 
+MAX_ANY_WORDS = 30
+
+
 def _tsquery(query: str) -> Any:
     return func.websearch_to_tsquery(ENGLISH, query)
+
+
+def _any_words_tsquery(query: str) -> Any:
+    """Matches records containing ANY of the query's words (stemmed; stop words dropped by PostgreSQL),
+    ranked by how well they match. For natural-language questions, where requiring every word would
+    find almost nothing. Only letters and digits reach ``to_tsquery``, so the input can't break it."""
+    words = list(dict.fromkeys(w.lower() for w in re.findall(r"[^\W_]+", query)))[:MAX_ANY_WORDS]
+    if not words:
+        raise ProblemError(400, "Enter something to search for.")
+    return func.to_tsquery(ENGLISH, " | ".join(words))
 
 
 def _rank(vector: Any, tsq: Any) -> Any:
@@ -234,11 +248,15 @@ def search(
     department_id: uuid.UUID | None = None,
     types: list[SourceType] | None = None,
     limit: int = 20,
+    match_any: bool = False,
 ) -> list[Hit]:
-    """The best matches across the chosen record types, highest rank first."""
+    """The best matches across the chosen record types, highest rank first.
+
+    ``match_any``: match any word of the query (for questions), instead of web-search syntax where every
+    word must match (for people searching)."""
     if not query.strip():
         raise ProblemError(400, "Enter something to search for.")
-    tsq = _tsquery(query)
+    tsq = _any_words_tsquery(query) if match_any else _tsquery(query)
     hits: list[Hit] = []
     for source in types or list(SEARCHERS):
         searcher, model = SEARCHERS[source]

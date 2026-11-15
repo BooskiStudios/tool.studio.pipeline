@@ -20,6 +20,7 @@ from booski_core.models import (
     TaskComment,
     Workstream,
 )
+from booski_core.modules.agents.defaults import seed_default_agents
 from booski_core.modules.departments.service import seed_default_departments
 from helpers import Account, add_member, make_user, make_workspace
 
@@ -59,6 +60,8 @@ def build_studio(db: Session, *, project_visibility: str = "workspace") -> Studi
     add_member(db, ws, target, Role.VIEWER)
 
     seed_default_departments(db, ws)
+    db.flush()
+    seed_default_agents(db, ws)
     db.flush()
     department = db.query(Department).filter_by(workspace_id=ws, slug="game-development").one()
     project = Project(

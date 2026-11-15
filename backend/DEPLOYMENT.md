@@ -113,6 +113,10 @@ booski backup restore /secure/backups/booski-booski-20261114T093000Z.dump --targ
 - Migrations run separately (`booski db upgrade`, the Compose `migrate` service) before the app starts, so several app containers never race to migrate.
 - Shutdown: on `SIGTERM` the server stops accepting connections and gives in-flight requests 10 seconds (Compose allows 15).
 
+### The agent worker (PR 3.4)
+
+Agent runs are executed by a separate process, `booski agent-worker` (the Compose `agent-worker` service), not by the API. Run at least one alongside the API, with the same database and `BOOSKI_ANTHROPIC_API_KEY`; without a worker, runs stay queued. Several workers can run side by side. On `SIGTERM` a worker stops; a run it was working on is picked up again by any worker once its 10-minute lease expires, and continues from its last completed step.
+
 ## 8. Known gaps (later phases)
 
 MFA/SSO, email delivery of invitations, file storage for attachments and assets, scheduled backups, metrics export, and multi-instance session cleanup are not part of Phase 2.

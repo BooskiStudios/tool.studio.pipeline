@@ -268,8 +268,8 @@ def test_unknown_tasks_are_rejected(db: Session, studio: Studio, fake_ai: FakePr
     assert caught.value.status == 400
 
 
-@pytest.mark.parametrize("role", [Role.DEVELOPER, Role.COLLABORATOR, Role.VIEWER])
-def test_only_owners_and_admins_may_use_ai_for_now(
+@pytest.mark.parametrize("role", [Role.COLLABORATOR, Role.VIEWER])  # developers may since PR 3.4 (D50)
+def test_collaborators_and_viewers_may_not_use_ai(
     db: Session, studio: Studio, fake_ai: FakeProvider, role: Role
 ) -> None:
     _enable(db, studio)

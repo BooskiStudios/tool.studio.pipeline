@@ -25,7 +25,7 @@ export type Capability =
   | "comments.write" | "milestones.write" | "documents.write" | "decisions.write" | "memory.write"
   | "approvals.request"
   | "approvals.review_assigned" | "approvals.decide" | "activity.read" | "audit.read"
-  | "ai.use" | "ai.manage" | "ai.usage.read";
+  | "ai.use" | "ai.manage" | "ai.usage.read" | "agents.manage";
 
 export interface User {
   id: Uuid;

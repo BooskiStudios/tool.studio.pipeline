@@ -1,7 +1,8 @@
 """Context assembly: the knowledge an AI request should see, within a token budget.
 
-``assemble_context`` searches what the caller may see, then adds the best items in rank order until the
-budget is used. An item that doesn't fit is shortened if a useful amount of room is left, otherwise left
+``assemble_context`` searches what the caller may see (matching any meaningful word of the query, since
+questions are written in sentences), then adds the best items in rank order until the budget is used.
+An item that doesn't fit is shortened if a useful amount of room is left, otherwise left
 out. Every item keeps its source, so answers can cite where facts came from.
 
 Token counts are a conservative estimate (one token per ``CHARS_PER_TOKEN`` characters, rounded up), so
@@ -78,7 +79,9 @@ def assemble_context(
     budget_tokens: int = DEFAULT_BUDGET_TOKENS,
 ) -> ContextPack:
     budget = max(MIN_BUDGET_TOKENS, min(budget_tokens, MAX_BUDGET_TOKENS))
-    hits = search(db, ctx, query, project=project, department_id=department_id, limit=CANDIDATES)
+    hits = search(
+        db, ctx, query, project=project, department_id=department_id, limit=CANDIDATES, match_any=True
+    )
     items: list[ContextItem] = []
     used = 0
     omitted = 0

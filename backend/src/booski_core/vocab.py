@@ -32,6 +32,25 @@ AiRequestStatus = Literal["succeeded", "refused", "failed", "blocked"]
 # Memory and retrieval (PR 3.3)
 MemoryKind = Literal["fact", "convention", "lesson", "preference"]
 SourceType = Literal["memory", "document", "decision"]
+# Agents (PR 3.4). Autonomy levels 3-4 need tools (PR 3.5+); only the first two can be configured yet.
+AutonomyLevel = Literal["assist", "execute_with_approval", "controlled_autonomy", "coordinated_workflows"]
+AgentRunStatus = Literal["queued", "running", "paused", "succeeded", "failed", "cancelled"]
+AgentRunEventType = Literal[
+    "created",
+    "claimed",
+    "planned",
+    "step_started",
+    "step_completed",
+    "step_retried",
+    "step_failed",
+    "paused",
+    "resumed",
+    "redirected",
+    "cancelled",
+    "completed",
+    "failed",
+    "review_requested",
+]
 
 
 def values(literal: object) -> tuple[str, ...]:

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Self
 from urllib.parse import urlsplit
 
-from pydantic import Field, PostgresDsn, SecretStr, model_validator
+from pydantic import Field, PostgresDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -92,6 +92,12 @@ class Settings(BaseSettings):
     ai_max_retries: int = Field(
         default=2, ge=0, le=5, description="Retries for rate limits, overload, server and connection errors."
     )
+
+    @field_validator("anthropic_api_key", mode="before")
+    @classmethod
+    def _blank_key_is_no_key(cls, value: object) -> object:
+        """An empty value (e.g. an unset variable passed through Docker Compose) means "no key"."""
+        return None if isinstance(value, str) and not value.strip() else value
 
     @model_validator(mode="after")
     def _check_production(self) -> Self:
