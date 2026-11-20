@@ -70,6 +70,12 @@
 | D51 | Agents don't suggest memory entries yet | Explicitly approved decision | In effect |
 | D52 | Examples and summaries go inside the question pop-up | Explicitly approved decision (working process) | In effect |
 | D53 | PR3.4 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.4 only) | Completed |
+| D54 | PR3.5 approved: tools for agents, changes only through review | Explicitly approved decision | In effect |
+| D55 | Agents call tools inside their steps (Claude tool use) | Explicitly approved decision + implementation choices | Implemented (PR3.5, awaiting review) |
+| D56 | First tools: eight read tools and three propose tools | Explicitly approved decision + implementation choices | Implemented (PR3.5, awaiting review) |
+| D57 | Proposed changes are bundled into the run's review; approve applies all, reject none | Explicitly approved decision + implementation choices | Implemented (PR3.5, awaiting review) |
+| D58 | No autonomy level 3 yet; Assist agents get read tools only | Explicitly approved decision | Implemented (PR3.5, awaiting review) |
+| D59 | Tool limits: 10 calls per step, 40 per run, 20 records, ~4,000 tokens per read, 10 s per call | Explicitly approved decision | Implemented (PR3.5, awaiting review) |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -529,6 +535,45 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Decision:** PR #14 was merged into `main` with a **merge commit** (`93a860a`) after its CI passed, including the end-to-end journeys; marking PR3.4 Complete was done in a separate docs-only PR.
 - **Scope:** PR3.4 and its follow-up status PR only. Like D22, D24, D30, D39 and D44, it is **not** a standing rule.
 
+### D54 — PR3.5 approved
+- **Category:** explicitly approved decision.
+- **Date:** 20 November 2026.
+- **Evidence:** pop-up answers to D55–D59, then "Approve and start (Recommended)", whose preview listed the acceptance criteria.
+- **Decision:** PR3.5 (Tools, Permissions & Execution) proceeds on `phase-3/pr3.5-tools-execution` with the acceptance criteria in ROADMAP.md. Backend only; fake AI in tests. No Unity, files, Git or Claude Code (PR3.6–PR3.7), no UI (PR3.8).
+
+### D55 — Tools inside agent steps
+- **Category:** explicitly approved decision + implementation choices.
+- **Date:** 20 November 2026.
+- **Evidence:** pop-up answer "Inside each step (Recommended)".
+- **Decision:** during a step, Claude decides when to call a tool; Booski runs it with the permissions of the person who started the run and returns the result, and the step continues until the model answers without a tool call.
+- **Implementation choices:** Claude tool use with `tool_choice` left on auto (current models reject forced tool use). The model's previous reply is sent back exactly as returned (it carries thinking blocks the API requires unchanged), and all tool results of a reply go back in one message. Planning and the final deliverable don't use tools. Every model call in the loop goes through the gateway (budget, routing, cost log). Tool results go back as error results when a call is invalid, denied or over a limit; the run carries on.
+
+### D56 — The first tools
+- **Category:** explicitly approved decision + implementation choices.
+- **Date:** 20 November 2026.
+- **Evidence:** pop-up answer "Read + propose drafts (Recommended)".
+- **Decision:** **read** (no approval): `search_knowledge`, `get_document`, `get_decision`, `list_memories`, `list_projects`, `list_milestones`, `list_tasks`, `get_task`. **Propose** (applied only after approval): `create_document`, `create_tasks` (up to 20, unassigned), `propose_decision` (status "proposed"). No tool edits, deletes, archives, assigns people, comments, writes memory (D51) or reaches outside Booski; tool names may not start with a forbidden verb (`registry.FORBIDDEN_ACTIONS`, tested).
+- **Implementation choices:** each agent has an allowed tool list. Starter agents: every read tool, plus Producer `create_tasks`, `create_document`, `propose_decision`; Technical Director `create_document`, `propose_decision`; Game Designer `create_document`; QA Lead `create_document`, `create_tasks`. Agents a workspace adds start with no tools. Every call is recorded in the append-only `agent_tool_calls` log.
+
+### D57 — Changes are bundled into one review
+- **Category:** explicitly approved decision + implementation choices.
+- **Date:** 20 November 2026.
+- **Evidence:** pop-up answer "Bundled into the final review (Recommended)".
+- **Decision:** a propose tool only stages a change; the run's single "AI output" approval lists the deliverable and every proposed change. Approving applies them all; rejecting (or cancelling the review) applies none. A failed or cancelled run's proposals are discarded.
+- **Implementation choices:** changes are applied in one savepoint through the same services the API uses, as the person who started the run, so their **current** permissions are re-checked; if any change can't be applied, none is, and each is marked failed with the reason. Applied records are authored by the starter; the run's history records who approved.
+
+### D58 — No autonomy level 3 yet
+- **Category:** explicitly approved decision.
+- **Date:** 20 November 2026.
+- **Evidence:** pop-up answer "Not yet (Recommended)".
+- **Decision:** every change needs a person's approval; only autonomy levels 1–2 can be configured. "Assist" agents only advise, so they are offered read tools only.
+
+### D59 — Tool limits
+- **Category:** explicitly approved decision.
+- **Date:** 20 November 2026.
+- **Evidence:** pop-up answer "Sensible defaults (Recommended)".
+- **Decision:** per agent, editable by owners and admins: up to 10 tool calls per step, 40 per run, 20 proposed records per run (each task counts), about 4,000 tokens of text per read (12,000 characters), and 10 seconds per tool call (a database statement timeout). Reaching a limit tells the model to finish with what it has; it doesn't fail the run.
+
 ---
 
 ## Phase 3 direction (D-P3-1 – D-P3-13)
@@ -583,6 +628,8 @@ Notes for later review. None of these is a decision.
 - **D48:** more agents as tools arrive (the toolkit spec's Wave 1, PR3.5–PR3.7); tuning each agent's task, limits and guidance from real runs.
 - **D49:** turning an approved output into records automatically (needs tools, PR3.5).
 - **D51:** agents suggesting memory entries, saved only after human approval.
+- **D56:** more tools (edit records as new revisions, comments, task status); picking individual changes to apply.
+- **D58:** autonomy level 3 for low-risk changes once agents have a track record.
 
 ## Proposals — awaiting a decision
 

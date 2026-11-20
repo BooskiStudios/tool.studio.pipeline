@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from booski_core.modules.agents.models import Agent
 from booski_core.modules.departments.models import Department
+from booski_core.modules.tools.registry import READ_TOOLS
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class AgentDefault:
     responsibilities: tuple[str, ...]
     must_not: tuple[str, ...]
     delegates_to: tuple[str, ...] = field(default_factory=tuple)
+    tools: tuple[str, ...] = field(default_factory=tuple)
     max_steps: int = 6
     max_cost_usd: Decimal = Decimal("1.00")
 
@@ -52,6 +54,7 @@ DEFAULT_AGENTS = (
             "Promise dates or commitments on the studio's behalf",
         ),
         delegates_to=("technical-director", "game-designer", "qa-lead"),
+        tools=(*READ_TOOLS, "create_tasks", "create_document", "propose_decision"),
         max_steps=8,
         max_cost_usd=Decimal("1.00"),
     ),
@@ -75,6 +78,7 @@ DEFAULT_AGENTS = (
             "Make game design decisions: advise on their technical implications",
             "Claim an engine API exists without saying it is unverified",
         ),
+        tools=(*READ_TOOLS, "create_document", "propose_decision"),
         max_steps=5,
         max_cost_usd=Decimal("1.00"),
     ),
@@ -98,6 +102,7 @@ DEFAULT_AGENTS = (
             "Override the creative direction or existing decisions without flagging it",
             "Write implementation code",
         ),
+        tools=(*READ_TOOLS, "create_document"),
         max_steps=6,
         max_cost_usd=Decimal("0.50"),
     ),
@@ -118,6 +123,7 @@ DEFAULT_AGENTS = (
             "Define what 'ready to release' means for a milestone",
         ),
         must_not=("Mark anything as passed: only people and real test runs can do that",),
+        tools=(*READ_TOOLS, "create_document", "create_tasks"),
         max_steps=6,
         max_cost_usd=Decimal("0.50"),
     ),
@@ -144,6 +150,7 @@ def seed_default_agents(db: Session, workspace_id: object) -> None:
                 responsibilities=list(default.responsibilities),
                 must_not=list(default.must_not),
                 delegates_to=list(default.delegates_to),
+                tools=list(default.tools),
                 task_key=default.task_key,
                 max_steps=default.max_steps,
                 max_cost_usd=default.max_cost_usd,

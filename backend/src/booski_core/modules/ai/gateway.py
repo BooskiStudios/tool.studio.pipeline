@@ -33,9 +33,12 @@ from booski_core.modules.ai.providers.base import (
     AiCall,
     AiProvider,
     AiResult,
-    ChatMessage,
+    AssistantTurn,
+    Message,
     ProviderError,
     ProviderErrorKind,
+    ToolCall,
+    ToolSpec,
 )
 from booski_core.modules.projects.models import Project
 
@@ -60,6 +63,8 @@ class GatewayResult:
     cost_usd: Decimal
     duration_ms: int
     refusal_category: str | None
+    tool_calls: tuple[ToolCall, ...] = ()
+    assistant_turn: AssistantTurn | None = None
 
 
 def month_start(now: datetime) -> datetime:
@@ -102,9 +107,10 @@ def complete(
     providers: Mapping[str, AiProvider],
     *,
     task_key: str,
-    messages: Sequence[ChatMessage],
+    messages: Sequence[Message],
     system: str | None = None,
     project: Project | None = None,
+    tools: Sequence[ToolSpec] = (),
 ) -> GatewayResult:
     """Runs one AI request for the signed-in member. Raises ``ProblemError`` when it can't run."""
     if Capability.AI_USE not in project_capabilities(db, ctx, project):
@@ -137,6 +143,7 @@ def complete(
         max_tokens=route.max_tokens,
         system=system,
         effort=route.effort,
+        tools=tuple(tools),
     )
     started = time.monotonic()
     try:
@@ -159,6 +166,8 @@ def complete(
         cost_usd=cost,
         duration_ms=duration_ms,
         refusal_category=result.refusal_category,
+        tool_calls=result.tool_calls,
+        assistant_turn=result.assistant_turn,
     )
 
 

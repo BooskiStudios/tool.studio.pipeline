@@ -50,7 +50,15 @@ AgentRunEventType = Literal[
     "completed",
     "failed",
     "review_requested",
+    "changes_applied",
+    "changes_rejected",
+    "changes_failed",
 ]
+# Tools (PR 3.5). "read" tools only look; "propose" tools stage a change that is applied only when a person
+# approves the run's review (D57). There is deliberately no kind that edits or deletes.
+ToolKind = Literal["read", "propose"]
+ToolCallStatus = Literal["succeeded", "failed", "denied", "limit_reached"]
+ChangeStatus = Literal["proposed", "applied", "rejected", "failed", "discarded"]
 
 
 def values(literal: object) -> tuple[str, ...]:

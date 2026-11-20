@@ -449,6 +449,23 @@ MATRIX = [
         lambda w: f"{B}/agent-runs/{w.run_id}/redirect",
         lambda w: {"instruction": "Focus on combat."},
     ),
+    # ---- tools (PR 3.5): the catalogue and each run's tool calls and proposed changes are readable by
+    # anyone who can see the run.
+    Case("GET", W + "/tools", EVERYONE, 200, lambda w: f"{B}/tools"),
+    Case(
+        "GET",
+        W + "/agent-runs/{run_id}/tool-calls",
+        EVERYONE,
+        200,
+        lambda w: f"{B}/agent-runs/{w.run_id}/tool-calls",
+    ),
+    Case(
+        "GET",
+        W + "/agent-runs/{run_id}/changes",
+        EVERYONE,
+        200,
+        lambda w: f"{B}/agent-runs/{w.run_id}/changes",
+    ),
 ]
 
 

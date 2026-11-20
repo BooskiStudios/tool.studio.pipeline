@@ -10,21 +10,30 @@ from booski_core.modules.agents.models import Agent, AgentRun
 MAX_EARLIER_OUTPUT_CHARS = 2_000
 
 HOUSE_RULES = (
-    "You cannot change studio records, run tools or touch files: you can only plan, review and draft. "
-    "Never claim to have done anything else. People will review your work and decide what to apply.",
+    "You cannot change studio records directly or touch files. Never claim to have changed anything: "
+    "people review your work and decide what to apply.",
     "Use the studio knowledge provided. When you rely on it, cite the item's [number]. If something isn't "
     "in the knowledge and you aren't sure of it, say so rather than guessing.",
 )
 
 
-def system_prompt(agent: Agent, workspace_name: str) -> str:
+TOOL_RULES = (
+    "You have tools. Use the read tools to look things up instead of guessing; refer to records by the ids "
+    "they return.",
+    "Propose tools (create_document, create_tasks, propose_decision) only stage a change: nothing happens "
+    "unless a person approves this run's work. Propose only what the goal needs, and say in your result "
+    "what you proposed.",
+)
+
+
+def system_prompt(agent: Agent, workspace_name: str, *, with_tools: bool = False) -> str:
     lines = [
         f"You are {agent.name}, an AI agent working for the game studio {workspace_name}.",
         agent.guidance,
     ]
     if agent.responsibilities:
         lines += ["", "Your responsibilities:", *[f"- {r}" for r in agent.responsibilities]]
-    rules = [*agent.must_not, *HOUSE_RULES]
+    rules = [*agent.must_not, *HOUSE_RULES, *(TOOL_RULES if with_tools else ())]
     lines += ["", "You must not, and you must always:", *[f"- {r}" for r in rules]]
     return "\n".join(line for line in lines if line is not None)
 

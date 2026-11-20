@@ -14,7 +14,7 @@ from booski_core.core.request_id import install_request_id
 from booski_core.core.security_headers import install_security_headers
 from booski_core.db import create_db_engine, create_session_factory
 from booski_core.modules.activity.router import router as activity_router
-from booski_core.modules.agents.router import agents_router, runs_router
+from booski_core.modules.agents.router import agents_router, runs_router, tools_router
 from booski_core.modules.ai.providers import build_providers
 from booski_core.modules.ai.router import router as ai_router
 from booski_core.modules.approvals.router import router as approvals_router
@@ -49,6 +49,7 @@ ROUTERS = (
     context_router,
     agents_router,
     runs_router,
+    tools_router,
 )
 
 API_PREFIX = "/api/v1"

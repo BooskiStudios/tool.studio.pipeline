@@ -115,7 +115,7 @@ None of these exists:
 
 ## 6. AI Core (Partially built: PR3.2)
 
-> **Three layers exist:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings (PR3.2); memory entries, permission-aware search and context assembly (PR3.3); and agents with orchestrated runs executed by the agent worker (PR3.4). There is **no** tool execution or chat: agents can plan, review and draft but change nothing. Nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
+> **Three layers exist:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings (PR3.2); memory entries, permission-aware search and context assembly (PR3.3); agents with orchestrated runs executed by the agent worker (PR3.4); and tools agents use inside their steps (PR3.5, awaiting review). Agents can read studio data and **propose** documents, tasks and decisions, which are created only when a person approves the run's review. There is no chat, and no tool reaches outside Booski. Nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
 
 **Placement (built):** inside Booski Core as a new module, `backend/src/booski_core/modules/ai/`, not a separate service (D-P3-2).
 
@@ -173,6 +173,26 @@ booski agent-worker ── claim (SKIP LOCKED, 10-min lease) ──▶ Orchestra
 | History | `agent_run_events` (append-only) | Created, claimed, planned, step started/completed/retried/failed, paused, resumed, redirected, cancelled, completed, failed, review requested; links to the AI request of each call. |
 | Human control | `/agent-runs/{id}/pause · resume · cancel · redirect` | The starter, owners and admins. Pausing takes effect after the current step; redirect notes are followed from the next step on. |
 
+### Built in PR3.5: tools (awaiting review)
+
+```
+step ─▶ gateway (tools offered) ─▶ model asks for tool calls ─▶ for each call:
+          allowed for this agent? · within limits? · valid input?  (else an error result)
+          run as the starter (their permissions), 10 s DB timeout ─▶ result (≤ ~4k tokens)
+          propose tools: stage an agent_run_change instead of writing ─▶ "will be applied if approved"
+        ◀─ all results in one message; the model's previous reply sent back unchanged ─┘
+review approval ─▶ approve: apply every change in one savepoint, as the starter (re-checked)
+                   reject / cancel: apply none
+```
+
+| Part | Where | What it does |
+|---|---|---|
+| Registry | `modules/tools/registry.py` · `GET /tools` | Eight read tools and three propose tools, each with a JSON input schema and a permission-checked implementation reusing the existing services (D56). No edit, delete or external tool; forbidden verbs are listed in code and tested. |
+| Tool loop | `modules/agents/orchestrator.py` | Offers the doer's allowed tools in each step; runs calls; enforces per-step, per-run and change limits and a 10-second timeout per call (D59); Assist agents get read tools only (D58). |
+| Tool-call log | `agent_tool_calls` (append-only) · `GET /agent-runs/{id}/tool-calls` | Every call: step, agent, tool, input, outcome, result preview, duration, linked change. |
+| Proposed changes | `agent_run_changes` · `GET /agent-runs/{id}/changes` | Staged changes and their outcome (proposed, applied, rejected, failed, discarded). |
+| Applying | `modules/tools/apply.py`, called when an "AI output" approval is decided | All or nothing, as the starter, re-checking permissions (D57). |
+
 ### Planned layers, in roadmap order
 
 | Layer | Milestone | Intent |
@@ -180,7 +200,7 @@ booski agent-worker ── claim (SKIP LOCKED, 10-min lease) ──▶ Orchestra
 | Providers and models | PR3.2 | **Built**, see above. Not yet: other providers, per-agent cost (no agents exist), per-workspace routing. |
 | Memory and knowledge | PR3.3 | **Built**, see above. Not yet: AI-written memories (PR3.4), tasks and milestones as sources, embeddings. |
 | Agents and orchestration | PR3.4 | **Built**, see above. Not yet: tools (PR3.5), autonomy levels 3–4, AI-suggested memories (D51), agent evaluations against real models. |
-| Tools and execution | PR3.5 | Tool registry with schemas; permission-aware execution scoped to workspace and project; approval requirements; sandboxing, timeouts and limits; destructive-action protection. Starts with knowledge retrieval and existing platform capabilities. |
+| Tools and execution | PR3.5 | **Built (awaiting review)**, see above. Not yet: editing tools, autonomy level 3, tools that act on files or outside Booski (PR3.6–PR3.7). |
 | Command Centre and AI Workforce | PR3.8 | Connects the existing interface: command bar, workforce dashboard, live progress, approvals, usage and cost, errors and human controls. |
 
 **Toolkit input from PR3.1:** the game-development toolkit will take the form of Booski agent configurations and workflows (D27). Its contents are a [proposed specification](BOOSKI_GAME_DEV_TOOLKIT.md) (agent definition fields, an initial roster, workflows, review verdicts, guardrails), based on the [CCGS audit](audits/PR3.1-CCGS-AUDIT.md). It is an input to the PR3.2–PR3.8 designs; nothing in it is designed in detail, approved as a design, or built.

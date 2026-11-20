@@ -29,7 +29,15 @@ from booski_core.db import (
     same_workspace,
     uuid_pk,
 )
-from booski_core.vocab import AgentRunEventType, AgentRunStatus, AutonomyLevel, values
+from booski_core.vocab import (
+    AgentRunEventType,
+    AgentRunStatus,
+    AutonomyLevel,
+    ChangeStatus,
+    ToolCallStatus,
+    ToolKind,
+    values,
+)
 
 MAX_GOAL_CHARS = 4_000
 MAX_GUIDANCE_CHARS = 8_000
@@ -53,11 +61,16 @@ class Agent(Versioned, Timestamps, Base):
         CheckConstraint(f"char_length(guidance) <= {MAX_GUIDANCE_CHARS}", name="guidance_length"),
         CheckConstraint(
             "cardinality(responsibilities) <= 20 AND cardinality(must_not) <= 20"
-            " AND cardinality(delegates_to) <= 10",
+            " AND cardinality(delegates_to) <= 10 AND cardinality(tools) <= 30",
             name="list_sizes",
         ),
         CheckConstraint("max_steps BETWEEN 1 AND 20", name="max_steps_range"),
         CheckConstraint("max_cost_usd > 0 AND max_cost_usd <= 100", name="max_cost_range"),
+        CheckConstraint(
+            "max_tool_calls_per_step BETWEEN 0 AND 50 AND max_tool_calls_per_run BETWEEN 0 AND 200"
+            " AND max_changes_per_run BETWEEN 0 AND 100",
+            name="tool_limits_range",
+        ),
         check_in("autonomy", values(AutonomyLevel), "autonomy_valid"),
     )
 
@@ -75,6 +88,11 @@ class Agent(Versioned, Timestamps, Base):
     autonomy: Mapped[str] = mapped_column(Text, server_default=text("'execute_with_approval'"))
     max_steps: Mapped[int] = mapped_column(Integer, server_default=text("6"))
     max_cost_usd: Mapped[Decimal] = mapped_column(Numeric(8, 2), server_default=text("1.00"))
+    # Tools this agent may use (PR 3.5, D56); limits on their use (D59).
+    tools: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'::text[]"))
+    max_tool_calls_per_step: Mapped[int] = mapped_column(Integer, server_default=text("10"))
+    max_tool_calls_per_run: Mapped[int] = mapped_column(Integer, server_default=text("40"))
+    max_changes_per_run: Mapped[int] = mapped_column(Integer, server_default=text("20"))
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
 
 
@@ -128,6 +146,7 @@ class AgentRun(Versioned, Timestamps, Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     approval_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    tool_calls_used: Mapped[int] = mapped_column(Integer, server_default=text("0"))
 
 
 class AgentRunEvent(CreatedAt, Base):
@@ -149,3 +168,58 @@ class AgentRunEvent(CreatedAt, Base):
     actor_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
     ai_request_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     data: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+
+
+class AgentToolCall(CreatedAt, Base):
+    """One tool call made by an agent during a run (PR 3.5). Append-only (database trigger)."""
+
+    __tablename__ = "agent_tool_calls"
+    __table_args__ = (
+        same_workspace(("run_id", "workspace_id"), "agent_runs"),
+        check_in("kind", values(ToolKind), "kind_valid"),
+        check_in("status", values(ToolCallStatus), "status_valid"),
+        CheckConstraint("jsonb_typeof(input) = 'object'", name="input_object"),
+        CheckConstraint("char_length(result_preview) <= 2000", name="result_preview_length"),
+        Index("ix_agent_tool_calls_run_id_created_at", "run_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    workspace_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("workspaces.id"))
+    run_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    step: Mapped[int] = mapped_column(Integer)
+    agent_key: Mapped[str] = mapped_column(Text)
+    tool: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(Text)
+    input: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(Text)
+    result_preview: Mapped[str] = mapped_column(Text, server_default=text("''"))
+    error: Mapped[str | None] = mapped_column(Text)
+    duration_ms: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    change_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+
+
+class AgentRunChange(Timestamps, Base):
+    """A change an agent proposed during a run (PR 3.5). Nothing happens to studio records until a person
+    approves the run's review; then every proposed change is applied, or none (D57)."""
+
+    __tablename__ = "agent_run_changes"
+    __table_args__ = (
+        UniqueConstraint("id", "workspace_id"),
+        UniqueConstraint("run_id", "seq"),
+        same_workspace(("run_id", "workspace_id"), "agent_runs"),
+        check_in("status", values(ChangeStatus), "status_valid"),
+        CheckConstraint("jsonb_typeof(payload) = 'object'", name="payload_object"),
+        CheckConstraint("jsonb_typeof(applied_ids) = 'array'", name="applied_ids_array"),
+        CheckConstraint("char_length(summary) BETWEEN 1 AND 300", name="summary_length"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    workspace_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("workspaces.id"))
+    run_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    seq: Mapped[int] = mapped_column(Integer)
+    tool: Mapped[str] = mapped_column(Text)
+    summary: Mapped[str] = mapped_column(Text)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)  # the validated request body for the change
+    status: Mapped[str] = mapped_column(Text, server_default=text("'proposed'"))
+    applied_ids: Mapped[list[str]] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
+    error: Mapped[str | None] = mapped_column(Text)

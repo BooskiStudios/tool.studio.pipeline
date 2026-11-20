@@ -13,7 +13,7 @@ from sqlalchemy import Engine, func, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, sessionmaker
 
-from ai_fakes import FakeProvider
+from ai_fakes import FakeProvider, prompt_of
 from booski_core.access.roles import Role
 from booski_core.core.request_meta import utcnow
 from booski_core.models import Approval, Membership
@@ -52,7 +52,7 @@ def scripted(plan: dict[str, Any] | str = TWO_STEP_PLAN) -> Callable[[AiCall], A
     """Answers planning prompts with ``plan``, steps with "Result of step N", and the final call."""
 
     def respond(call: AiCall) -> AiResult:
-        prompt = call.messages[-1].content
+        prompt = prompt_of(call)
         if "Make a short plan" in prompt:
             return _result(plan if isinstance(plan, str) else json.dumps(plan))
         if "Combine these into the final deliverable" in prompt:
@@ -227,7 +227,7 @@ def test_pause_resume_and_redirect_between_steps(
     base = scripted()
 
     def respond_and_pause_after_first_step(call: AiCall) -> AiResult:
-        prompt = call.messages[-1].content
+        prompt = prompt_of(call)
         if "Do step 1" in prompt:  # a person pauses while step 1 is running
             assert developer.post(f"{B}/agent-runs/{run_id}/pause").status_code == 200
         return base(call)
@@ -251,7 +251,7 @@ def test_pause_resume_and_redirect_between_steps(
     assert run["status"] == "succeeded"
     later = fake_ai.calls[calls_before:]
     assert len(later) == 2  # step 2 and the final deliverable: no re-planning, step 1 not repeated
-    assert all("Keep combat melee-only." in c.messages[-1].content for c in later)
+    assert all("Keep combat melee-only." in prompt_of(c) for c in later)
     assert "paused" in _events(developer, run_id) and "redirected" in _events(developer, run_id)
 
 
