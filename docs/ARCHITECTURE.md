@@ -115,7 +115,7 @@ None of these exists:
 
 ## 6. AI Core (Partially built: PR3.2)
 
-> **Three layers exist:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings (PR3.2); memory entries, permission-aware search and context assembly (PR3.3); and agents with orchestrated runs executed by the agent worker (PR3.4, awaiting review). There is **no** tool execution or chat: agents can plan, review and draft but change nothing. Nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
+> **Three layers exist:** providers, the model catalogue and routing, the AI gateway, usage and cost tracking, and workspace AI settings (PR3.2); memory entries, permission-aware search and context assembly (PR3.3); and agents with orchestrated runs executed by the agent worker (PR3.4). There is **no** tool execution or chat: agents can plan, review and draft but change nothing. Nothing in the web app uses AI yet: the AI screens are still labelled previews. Later layers are designed only when their milestones are approved.
 
 **Placement (built):** inside Booski Core as a new module, `backend/src/booski_core/modules/ai/`, not a separate service (D-P3-2).
 
@@ -152,7 +152,7 @@ There is deliberately **no** general chat endpoint: features built in later mile
 | Search | `modules/retrieval/search.py` · `GET /search` | Ranked full-text search across memory, current document revisions and decisions (D43), scoped exactly like each record's own endpoints: workspace, `project_scope` for restricted projects, archived items excluded. Every result carries its source (type, id, title, API path, version or revision). |
 | Context assembly | `modules/retrieval/context.py` · `POST /ai/context` (preview) | Best matches in rank order within a token budget (conservative estimate), shortening or leaving out what doesn't fit; each block cites its source. For agents to call from PR3.4; it sends nothing to a provider. |
 
-### Built in PR3.4: agents and orchestration (awaiting review)
+### Built in PR3.4: agents and orchestration
 
 ```
 person (developer+) ── POST /agent-runs ──▶ agent_runs (queued)
@@ -179,7 +179,7 @@ booski agent-worker ── claim (SKIP LOCKED, 10-min lease) ──▶ Orchestra
 |---|---|---|
 | Providers and models | PR3.2 | **Built**, see above. Not yet: other providers, per-agent cost (no agents exist), per-workspace routing. |
 | Memory and knowledge | PR3.3 | **Built**, see above. Not yet: AI-written memories (PR3.4), tasks and milestones as sources, embeddings. |
-| Agents and orchestration | PR3.4 | **Built (awaiting review)**, see above. Not yet: tools (PR3.5), autonomy levels 3–4, AI-suggested memories (D51), agent evaluations against real models. |
+| Agents and orchestration | PR3.4 | **Built**, see above. Not yet: tools (PR3.5), autonomy levels 3–4, AI-suggested memories (D51), agent evaluations against real models. |
 | Tools and execution | PR3.5 | Tool registry with schemas; permission-aware execution scoped to workspace and project; approval requirements; sandboxing, timeouts and limits; destructive-action protection. Starts with knowledge retrieval and existing platform capabilities. |
 | Command Centre and AI Workforce | PR3.8 | Connects the existing interface: command bar, workforce dashboard, live progress, approvals, usage and cost, errors and human controls. |
 
