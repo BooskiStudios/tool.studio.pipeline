@@ -71,11 +71,12 @@
 | D52 | Examples and summaries go inside the question pop-up | Explicitly approved decision (working process) | In effect |
 | D53 | PR3.4 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.4 only) | Completed |
 | D54 | PR3.5 approved: tools for agents, changes only through review | Explicitly approved decision | In effect |
-| D55 | Agents call tools inside their steps (Claude tool use) | Explicitly approved decision + implementation choices | Implemented (PR3.5, awaiting review) |
-| D56 | First tools: eight read tools and three propose tools | Explicitly approved decision + implementation choices | Implemented (PR3.5, awaiting review) |
-| D57 | Proposed changes are bundled into the run's review; approve applies all, reject none | Explicitly approved decision + implementation choices | Implemented (PR3.5, awaiting review) |
-| D58 | No autonomy level 3 yet; Assist agents get read tools only | Explicitly approved decision | Implemented (PR3.5, awaiting review) |
-| D59 | Tool limits: 10 calls per step, 40 per run, 20 records, ~4,000 tokens per read, 10 s per call | Explicitly approved decision | Implemented (PR3.5, awaiting review) |
+| D55 | Agents call tools inside their steps (Claude tool use) | Explicitly approved decision + implementation choices | Implemented (PR3.5) |
+| D56 | First tools: eight read tools and three propose tools | Explicitly approved decision + implementation choices | Implemented (PR3.5) |
+| D57 | Proposed changes are bundled into the run's review; approve applies all, reject none | Explicitly approved decision + implementation choices | Implemented (PR3.5) |
+| D58 | No autonomy level 3 yet; Assist agents get read tools only | Explicitly approved decision | Implemented (PR3.5) |
+| D59 | Tool limits: 10 calls per step, 40 per run, 20 records, ~4,000 tokens per read, 10 s per call | Explicitly approved decision | Implemented (PR3.5) |
+| D60 | PR3.5 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.5 only) | Completed |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -573,6 +574,13 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Date:** 20 November 2026.
 - **Evidence:** pop-up answer "Sensible defaults (Recommended)".
 - **Decision:** per agent, editable by owners and admins: up to 10 tool calls per step, 40 per run, 20 proposed records per run (each task counts), about 4,000 tokens of text per read (12,000 characters), and 10 seconds per tool call (a database statement timeout). Reaching a limit tells the model to finish with what it has; it doesn't fail the run.
+
+### D60 — How PR3.5 was merged
+- **Category:** explicitly approved decision, **for PR3.5 only**.
+- **Date:** 20 November 2026.
+- **Evidence:** pop-up answer "Push, PR, merge commit (Recommended)".
+- **Decision:** PR #16 was merged into `main` with a **merge commit** (`65e0899`) after its CI passed, including the end-to-end journeys; marking PR3.5 Complete was done in a separate docs-only PR.
+- **Scope:** PR3.5 and its follow-up status PR only. Like D22, D24, D30, D39, D44 and D53, it is **not** a standing rule.
 
 ---
 
