@@ -21,10 +21,10 @@
 - **Before that:** **PR3.3 — Persistent AI Memory & Knowledge** (PR #12, `39ae4ab`): memory entries, permission-aware search, context assembly. **PR3.2 — AI Core Foundation** (PR #10, `1bad661`): the AI gateway, the Anthropic provider, task-based routing with prices, usage and cost tracking, workspace AI settings. No live call to Anthropic has been made yet: the server has no key configured (`booski ai check` proves a key once one is added, D32).
 - **Next milestone:** **PR3.6 — Booski Local Worker**. **Status: Planned.** Not approved, not started. It may start only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 - **What exists today:** a working, persistent, multi-user studio application (Booski Core plus the React interface). It is the **foundation for the future Booski Control Plane**, not the completed Control Plane architecture described in [ARCHITECTURE.md](ARCHITECTURE.md). It stores accounts, workspaces, roles, departments, projects, milestones, tasks, documents, decisions, approvals and activity. The repository also holds the project documentation (`CLAUDE.md` and `docs/`), which is the source of truth for the plan and process.
-- **AI:** the AI Core foundation (providers, routing, gateway, usage and cost, workspace settings; PR3.2) and memory, search and context assembly (PR3.3) are built and merged. They are backend-only: no web-app feature uses them yet.
+- **AI:** the AI Core foundation (providers, routing, gateway, usage and cost, workspace settings; PR3.2), memory, search and context assembly (PR3.3), agents and orchestration (PR3.4) and agent tools with reviewed changes (PR3.5) are built and merged. They are backend-only: no web-app feature uses them yet.
 - **What does not exist:**
   - AI-related screens (command bar, AI workforce, agents, cost and usage, integrations) are still **labelled previews**.
-  - No memory system, agent, orchestration, tool execution, Local Worker, Claude Code integration or file storage has been built.
+  - No Local Worker, Claude Code integration, AI web-app screens or file storage has been built.
 
 ## Completed milestones
 
@@ -51,7 +51,7 @@ All PR2.x merges took place on 14 November 2026. Branch-level CI runs are listed
 - The recorded Phase 1 history ends at `d3acf5f` "Update .gitignore" on 4 November 2026.
 - `README.md` at `d3acf5f` still said "v0.3", but the code there already contains the v0.4–v0.7 features.
 
-## Repository state: verification results (14 November 2026)
+## Repository state: verification results (20 November 2026)
 
 These were true when checked. Re-check before relying on them.
 
@@ -83,7 +83,7 @@ These were true when checked. Re-check before relying on them.
   - 51 frontend unit tests, passing locally and in CI;
   - 14 end-to-end journeys, passing in CI (local runs timed out on page loads under heavy machine load on 14 November);
   - the container smoke test in CI.
-- **Development database:** upgraded to migration 0005 on 15 November 2026 (with the human's approval) for the live key test; it will need `booski db upgrade` again for 0006.
+- **Development database:** upgraded to migration 0005 on 15 November 2026 (with the human's approval) for the live key test; it will need `booski db upgrade` again for 0006 and 0007.
 - **Live key test:** a workspace-scoped key is in `backend/.env`; the call was refused for low Anthropic credit. Parked until the human adds credit.
 
 ## Outstanding reviews
