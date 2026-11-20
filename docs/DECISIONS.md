@@ -62,13 +62,14 @@
 | D43 | Search and AI context draw on memory, documents and decisions | Explicitly approved decision | Implemented (PR3.3) |
 | D44 | PR3.3 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.3 only) | Completed |
 | D45 | PR3.4 approved: agents plan, review and draft; no tools | Explicitly approved decision | In effect |
-| D46 | Agent runs execute in a separate `booski agent-worker` process | Explicitly approved decision + implementation choices | Implemented (PR3.4, awaiting review) |
-| D47 | Agents are per-workspace configurations, seeded from defaults | Explicitly approved decision | Implemented (PR3.4, awaiting review) |
-| D48 | Starter agents: Producer, Technical Director, Game Designer, QA Lead | Explicitly approved decision + implementation choices | Implemented (PR3.4, awaiting review) |
-| D49 | Agent outputs are reviewed through an "AI output" approval; people apply them | Explicitly approved decision | Implemented (PR3.4, awaiting review) |
-| D50 | Developers may use AI and start agent runs (supersedes part of D36) | Explicitly approved decision | Implemented (PR3.4, awaiting review) |
+| D46 | Agent runs execute in a separate `booski agent-worker` process | Explicitly approved decision + implementation choices | Implemented (PR3.4) |
+| D47 | Agents are per-workspace configurations, seeded from defaults | Explicitly approved decision | Implemented (PR3.4) |
+| D48 | Starter agents: Producer, Technical Director, Game Designer, QA Lead | Explicitly approved decision + implementation choices | Implemented (PR3.4) |
+| D49 | Agent outputs are reviewed through an "AI output" approval; people apply them | Explicitly approved decision | Implemented (PR3.4) |
+| D50 | Developers may use AI and start agent runs (supersedes part of D36) | Explicitly approved decision | Implemented (PR3.4) |
 | D51 | Agents don't suggest memory entries yet | Explicitly approved decision | In effect |
 | D52 | Examples and summaries go inside the question pop-up | Explicitly approved decision (working process) | In effect |
+| D53 | PR3.4 merged with a merge commit; status updated by follow-up PR | Explicitly approved decision (PR3.4 only) | Completed |
 | D-P3-1 … D-P3-13 | Phase 3 direction | Agreed direction (see note on IDs) | Agreed |
 | PROP-1 | Protect `main` | Proposal | Accepted; implemented as D25 |
 | PROP-2 | Delete the five merged Phase 2 branches | Proposal | Awaiting decision |
@@ -520,6 +521,13 @@ These entries cover what happened after the plan was approved. Each is classifie
 - **Date:** 15 November 2026.
 - **Evidence:** the human couldn't see examples written above a pop-up ("I can't see the examples").
 - **Decision:** the pop-up hides the chat while it is open, so anything needed to answer (examples, a plan summary, trade-offs) goes inside the pop-up: its question text, option descriptions or option previews. Recorded in `CLAUDE.md` §4, extending D38.
+
+### D53 — How PR3.4 was merged
+- **Category:** explicitly approved decision, **for PR3.4 only**.
+- **Date:** 15 November 2026 (merge); follow-up confirmed 20 November 2026.
+- **Evidence:** pop-up answer "Push, PR, merge commit (Recommended)" on 15 November; on 20 November, after the session had ended before the follow-up, "Finish PR3.4, then plan PR3.5 (Recommended)".
+- **Decision:** PR #14 was merged into `main` with a **merge commit** (`93a860a`) after its CI passed, including the end-to-end journeys; marking PR3.4 Complete was done in a separate docs-only PR.
+- **Scope:** PR3.4 and its follow-up status PR only. Like D22, D24, D30, D39 and D44, it is **not** a standing rule.
 
 ---
 
