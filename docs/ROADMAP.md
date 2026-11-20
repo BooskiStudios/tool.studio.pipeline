@@ -22,7 +22,7 @@ A planned or proposed item is **never** an approved task. Only the human moves a
 |---|---|---|
 | 1 | Frontend prototype | **Complete** |
 | 2 | Platform foundations (PR1, PR2.1–PR2.4) | **Complete** |
-| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0–PR3.4 are complete. No milestone is currently approved; PR3.5–PR3.8 are planned and not authorised. |
+| 3 | AI Core & Workforce (PR3.0–PR3.8) | **In progress**: PR3.0–PR3.4 are complete. PR3.5 is approved and awaiting review. PR3.6–PR3.8 are planned and not authorised. |
 | 4 | Game Development Intelligence | Planned (strategic) |
 | 5 | Concept Lab & Asset Production | Planned (strategic) |
 | 6 | Marketing Studio & Studio Operations | Planned (strategic) |
@@ -59,7 +59,7 @@ The original Phase 2 plan described PR2.1–PR2.6, but Phase 2 was delivered as 
 
 **Goal:** build the shared AI infrastructure: providers, memory, agents, tools, the Local Worker and Claude Code execution. Bring it into the existing interface.
 
-> **Phase 3 being "in progress" authorises only the milestones the human has explicitly approved:** PR3.0–PR3.4, all now complete. It does **not** authorise work on PR3.5 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
+> **Phase 3 being "in progress" authorises only the milestones the human has explicitly approved:** PR3.0–PR3.4 (complete) and PR3.5 (approved 20 November 2026, D54). It does **not** authorise work on PR3.6 or any later milestone. Each milestone starts only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 
 **Dependencies:** each milestone builds on the ones before it. The diagram shows the proposed dependency order, implied by the agreed numbering. Confirm a milestone's exact dependencies when it is planned.
 
@@ -69,7 +69,7 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
                                      └──────────────────────▶ PR3.8 (needs 3.4 and 3.5; 3.7 for execution views)
 ```
 
-> **Acceptance criteria for PR3.5–PR3.8 are *proposed*.** (PR3.1's to PR3.4's were agreed when they were approved.) They are derived from each milestone's agreed capability list. Confirm and refine them with the human when the milestone is planned, before it moves to *In progress*.
+> **Acceptance criteria for PR3.6–PR3.8 are *proposed*.** (PR3.1's to PR3.5's were agreed when they were approved.) They are derived from each milestone's agreed capability list. Confirm and refine them with the human when the milestone is planned, before it moves to *In progress*.
 
 ### PR3.0 — Booski Blueprint & Project Documentation · Complete
 - **Purpose:** make the repository the permanent source of truth, so a fresh Claude Code session understands the product, the plan and the state.
@@ -178,20 +178,24 @@ PR3.0 ─▶ PR3.1 (audit; informs PR3.4/3.5 design)
 - **Branch:** `phase-3/pr3.4-agent-framework`.
 - **Delivered:** commit `fedb80c`; merged on 15 November 2026 through PR #14 with a merge commit, `93a860a` (D53). CI: PR runs 43747356816 and 43747362677 ✅ (including the end-to-end journeys); `main` run 43747844740 ✅. Status marked Complete in a follow-up docs-only PR (`phase-3/pr3.4-status-complete`).
 
-### PR3.5 — Tools, Permissions & Execution · Planned
-- **Scope:**
-  - Tool registry with schemas.
-  - Permission-aware execution within workspace and project scope.
-  - Approval requirements (D-P3-6).
-  - Execution logs.
-  - Sandboxing, timeouts and limits.
-  - Destructive-action protection.
-- **Initial tools:** approved knowledge retrieval and existing Booski platform capabilities.
+### PR3.5 — Tools, Permissions & Execution · Awaiting review
+- **Scope (backend only, D54):**
+  - A tool registry with input schemas; tools used inside agent steps through Claude tool use (D55).
+  - Eight read tools and three propose tools (D56); per-agent tool lists.
+  - Permission-aware execution as the run's starter; proposed changes applied only when a person approves the run's review, all or nothing, with permissions re-checked (D57).
+  - The append-only tool-call log; each run's proposed changes and their outcome.
+  - Limits and timeouts (D59); destructive-action protection: no tool can edit, delete or act outside Booski.
+- **Out of scope:** autonomy level 3 (D58), Unity/files/Git/Claude Code (PR3.6–PR3.7), UI (PR3.8).
 - **Dependencies:** PR3.4.
-- **Proposed acceptance criteria:**
-  - Every tool call is authorised server-side and logged.
-  - Tools that need approval cannot run before it is granted.
-  - Limits are enforced and tested.
+- **Acceptance criteria (agreed, D54):**
+  1. Every tool call is authorised server-side as the starter, and logged (append-only).
+  2. No change before approval (tested).
+  3. Approve applies all, reject none; permissions re-checked at apply time.
+  4. Limits enforced and tested.
+  5. No tool can delete or reach outside Booski; the forbidden list is in code.
+  6. Fake AI only; the migration is reversible; the permission matrix covers new routes.
+  7. CI passes; docs and decisions updated.
+- **Branch:** `phase-3/pr3.5-tools-execution`.
 
 ### PR3.6 — Booski Local Worker · Planned
 - **Scope:**

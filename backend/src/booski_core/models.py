@@ -5,7 +5,7 @@ Add an import here whenever a module gains tables.
 
 from booski_core.db import Base
 from booski_core.modules.activity.models import ActivityEvent
-from booski_core.modules.agents.models import Agent, AgentRun, AgentRunEvent
+from booski_core.modules.agents.models import Agent, AgentRun, AgentRunChange, AgentRunEvent, AgentToolCall
 from booski_core.modules.ai.models import AiModel, AiRequest, AiTask, AiTierRoute, WorkspaceAiSettings
 from booski_core.modules.approvals.models import Approval, ApprovalReview
 from booski_core.modules.decisions.models import Decision, DecisionDocument
@@ -22,7 +22,9 @@ __all__ = [
     "ActivityEvent",
     "Agent",
     "AgentRun",
+    "AgentRunChange",
     "AgentRunEvent",
+    "AgentToolCall",
     "AiModel",
     "AiRequest",
     "AiTask",

@@ -13,20 +13,35 @@ from booski_core.modules.agents.schemas import (
     AgentCreate,
     AgentOut,
     AgentUpdate,
+    ChangeOut,
     RedirectBody,
     RunCreate,
     RunEventOut,
     RunOut,
     RunSummaryOut,
+    ToolCallOut,
+    ToolOut,
 )
 from booski_core.modules.identity.dependencies import DbSession, Meta
+from booski_core.modules.tools.registry import TOOLS
 from booski_core.vocab import AgentRunStatus
 
 agents_router = APIRouter(prefix="/w/{workspace_slug}/agents", tags=["agents"])
 runs_router = APIRouter(prefix="/w/{workspace_slug}/agent-runs", tags=["agents"])
+tools_router = APIRouter(prefix="/w/{workspace_slug}/tools", tags=["agents"])
 
 ManageAgents = Annotated[WorkspaceContext, Depends(require(Capability.AGENTS_MANAGE))]
 UseAi = Annotated[WorkspaceContext, Depends(require(Capability.AI_USE))]
+
+
+@tools_router.get("", response_model=list[ToolOut])
+def list_tools(ctx: MemberContext) -> list[ToolOut]:
+    """Every tool agents can be given. Read tools look things up; propose tools stage a change that is
+    applied only when a person approves the run's review."""
+    return [
+        ToolOut(name=t.name, kind=t.kind, description=t.description, input_schema=t.spec().input_schema)
+        for t in TOOLS.values()
+    ]
 
 
 @agents_router.get("", response_model=list[AgentOut])
@@ -104,6 +119,20 @@ def start_run(body: RunCreate, ctx: UseAi, db: DbSession, meta: Meta) -> RunOut:
 @runs_router.get("/{run_id}", response_model=RunOut)
 def get_run(run_id: uuid.UUID, ctx: MemberContext, db: DbSession) -> RunOut:
     return service.to_out(db, ctx, service.get_run(db, ctx, run_id))
+
+
+@runs_router.get("/{run_id}/tool-calls", response_model=list[ToolCallOut])
+def run_tool_calls(run_id: uuid.UUID, ctx: MemberContext, db: DbSession) -> list[ToolCallOut]:
+    """Every tool call the run made, with its input, outcome and timing."""
+    run = service.get_run(db, ctx, run_id)
+    return [ToolCallOut.model_validate(c) for c in service.list_tool_calls(db, run)]
+
+
+@runs_router.get("/{run_id}/changes", response_model=list[ChangeOut])
+def run_changes(run_id: uuid.UUID, ctx: MemberContext, db: DbSession) -> list[ChangeOut]:
+    """Changes the run proposed, and whether they were applied (after its review was approved)."""
+    run = service.get_run(db, ctx, run_id)
+    return [ChangeOut.model_validate(c) for c in service.list_changes(db, run)]
 
 
 @runs_router.get("/{run_id}/events", response_model=list[RunEventOut])

@@ -11,7 +11,16 @@ import anthropic
 import httpx2
 
 from booski_core.modules.ai.pricing import TokenUsage
-from booski_core.modules.ai.providers.base import AiCall, AiResult, ProviderError, ProviderErrorKind
+from booski_core.modules.ai.providers.base import (
+    AiCall,
+    AiResult,
+    AssistantTurn,
+    Message,
+    ProviderError,
+    ProviderErrorKind,
+    ToolCall,
+    ToolResultsTurn,
+)
 
 
 class AnthropicProvider:
@@ -40,12 +49,18 @@ class AnthropicProvider:
         params: dict[str, Any] = {
             "model": call.model_key,
             "max_tokens": call.max_tokens,
-            "messages": [{"role": m.role, "content": m.content} for m in call.messages],
+            "messages": [_message(m) for m in call.messages],
         }
         if call.system:
             params["system"] = call.system
         if call.effort:
             params["output_config"] = {"effort": call.effort}
+        if call.tools:
+            # tool_choice stays "auto": forcing a tool is rejected by current models.
+            params["tools"] = [
+                {"name": t.name, "description": t.description, "input_schema": t.input_schema}
+                for t in call.tools
+            ]
         try:
             message = self._client.messages.create(**params)
         except anthropic.APITimeoutError:  # a subclass of APIConnectionError, so it comes first
@@ -82,7 +97,35 @@ class AnthropicProvider:
             refusal_category=getattr(stop_details, "category", None)
             if message.stop_reason == "refusal"
             else None,
+            tool_calls=tuple(
+                ToolCall(
+                    id=block.id, name=block.name, input=block.input if isinstance(block.input, dict) else {}
+                )
+                for block in message.content
+                if block.type == "tool_use"
+            ),
+            # The full content (thinking, text and tool_use blocks), to send back unchanged.
+            assistant_turn=AssistantTurn(raw=message.content),
         )
+
+
+def _message(message: Message) -> dict[str, Any]:
+    if isinstance(message, AssistantTurn):
+        return {"role": "assistant", "content": message.raw}
+    if isinstance(message, ToolResultsTurn):
+        return {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": r.call_id,
+                    "content": r.content,
+                    "is_error": r.is_error,
+                }
+                for r in message.results
+            ],
+        }
+    return {"role": message.role, "content": message.content}
 
 
 def _status_error(kind: ProviderErrorKind, message: str, error: anthropic.APIStatusError) -> ProviderError:

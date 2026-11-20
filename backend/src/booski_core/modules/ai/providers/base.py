@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from booski_core.modules.ai.pricing import TokenUsage
 
@@ -14,14 +14,59 @@ class ChatMessage:
 
 
 @dataclass(frozen=True)
+class ToolSpec:
+    """A tool the model may call (PR 3.5). ``input_schema`` is a JSON Schema object."""
+
+    name: str
+    description: str
+    input_schema: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ToolCall:
+    id: str
+    name: str
+    input: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class AssistantTurn:
+    """The model's previous reply, exactly as the provider returned it, to send back in a tool loop.
+
+    Opaque on purpose: providers need their own content back unchanged (Anthropic's thinking blocks must
+    be replayed as they came), so nothing outside the provider reads or edits ``raw``.
+    """
+
+    raw: Any
+
+
+@dataclass(frozen=True)
+class ToolResult:
+    call_id: str
+    content: str
+    is_error: bool = False
+
+
+@dataclass(frozen=True)
+class ToolResultsTurn:
+    """The results of every tool call in the previous reply, sent back together."""
+
+    results: tuple[ToolResult, ...]
+
+
+Message = ChatMessage | AssistantTurn | ToolResultsTurn
+
+
+@dataclass(frozen=True)
 class AiCall:
     """One request, already routed: the gateway has chosen the model, effort and output limit."""
 
     model_key: str
-    messages: tuple[ChatMessage, ...]
+    messages: tuple[Message, ...]
     max_tokens: int
     system: str | None = None
     effort: str | None = None
+    tools: tuple[ToolSpec, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -31,6 +76,8 @@ class AiResult:
     usage: TokenUsage = field(default_factory=TokenUsage)
     provider_request_id: str | None = None
     refusal_category: str | None = None
+    tool_calls: tuple[ToolCall, ...] = ()
+    assistant_turn: AssistantTurn | None = None  # to send back if the conversation continues
 
     @property
     def refused(self) -> bool:

@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from booski_core.modules.agents.models import MAX_GOAL_CHARS, MAX_GUIDANCE_CHARS
-from booski_core.vocab import AgentRunEventType, AgentRunStatus
+from booski_core.vocab import AgentRunEventType, AgentRunStatus, ChangeStatus, ToolCallStatus, ToolKind
 
 Key = Annotated[str, StringConstraints(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$", min_length=2, max_length=48)]
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
@@ -14,7 +14,8 @@ Line = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max
 Guidance = Annotated[str, StringConstraints(strip_whitespace=True, max_length=MAX_GUIDANCE_CHARS)]
 Goal = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_GOAL_CHARS)]
 Instruction = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2_000)]
-# Levels 3-4 (controlled autonomy, coordinated workflows) need tools, which arrive in PR 3.5+.
+ToolName = Annotated[str, StringConstraints(pattern=r"^[a-z_]{2,40}$")]
+# Levels 3-4 (controlled autonomy, coordinated workflows) are not enabled yet (D58).
 ConfigurableAutonomy = Literal["assist", "execute_with_approval"]
 
 
@@ -31,6 +32,10 @@ class AgentFields(BaseModel):
     autonomy: ConfigurableAutonomy = "execute_with_approval"
     max_steps: int = Field(default=6, ge=1, le=20)
     max_cost_usd: Decimal = Field(default=Decimal("1.00"), gt=0, le=100, decimal_places=2)
+    tools: list[ToolName] = Field(default_factory=list, max_length=30)
+    max_tool_calls_per_step: int = Field(default=10, ge=0, le=50)
+    max_tool_calls_per_run: int = Field(default=40, ge=0, le=200)
+    max_changes_per_run: int = Field(default=20, ge=0, le=100)
 
 
 class AgentCreate(AgentFields):
@@ -52,6 +57,10 @@ class AgentUpdate(BaseModel):
     autonomy: ConfigurableAutonomy | None = None
     max_steps: int | None = Field(default=None, ge=1, le=20)
     max_cost_usd: Decimal | None = Field(default=None, gt=0, le=100, decimal_places=2)
+    tools: list[ToolName] | None = Field(default=None, max_length=30)
+    max_tool_calls_per_step: int | None = Field(default=None, ge=0, le=50)
+    max_tool_calls_per_run: int | None = Field(default=None, ge=0, le=200)
+    max_changes_per_run: int | None = Field(default=None, ge=0, le=100)
     is_active: bool | None = None
     version: int | None = None
 
@@ -71,6 +80,10 @@ class AgentOut(BaseModel):
     autonomy: str
     max_steps: int
     max_cost_usd: Decimal
+    tools: list[str]
+    max_tool_calls_per_step: int
+    max_tool_calls_per_run: int
+    max_changes_per_run: int
     is_active: bool
     version: int
     updated_at: datetime
@@ -125,8 +138,48 @@ class RunOut(RunSummaryOut):
     output: str
     error_detail: str | None
     attempts: int
+    tool_calls_used: int
     started_at: datetime | None
     can_control: bool = False
+
+
+class ToolOut(BaseModel):
+    name: str
+    kind: ToolKind
+    description: str
+    input_schema: dict[str, Any]
+
+
+class ToolCallOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    step: int
+    agent_key: str
+    tool: str
+    kind: ToolKind
+    input: dict[str, Any]
+    status: ToolCallStatus
+    result_preview: str
+    error: str | None
+    duration_ms: int
+    change_id: uuid.UUID | None
+    created_at: datetime
+
+
+class ChangeOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    seq: int
+    tool: str
+    summary: str
+    payload: dict[str, Any]
+    status: ChangeStatus
+    applied_ids: list[str]
+    error: str | None
+    created_at: datetime
+    updated_at: datetime
 
 
 class RunEventOut(BaseModel):

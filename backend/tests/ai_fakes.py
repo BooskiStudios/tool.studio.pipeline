@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from booski_core.modules.ai.pricing import TokenUsage
-from booski_core.modules.ai.providers.base import AiCall, AiResult, ProviderError
+from booski_core.modules.ai.providers.base import AiCall, AiResult, ChatMessage, ProviderError
 
 DEFAULT_RESULT = AiResult(
     text="OK",
@@ -33,3 +33,8 @@ class FakeProvider:
         if self.responder is not None:
             return self.responder(call)
         return self.result
+
+
+def prompt_of(call: AiCall) -> str:
+    """The first user message of a call: the prompt Booski wrote (later messages may be tool turns)."""
+    return next(m.content for m in call.messages if isinstance(m, ChatMessage))

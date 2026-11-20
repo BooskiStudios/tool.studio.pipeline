@@ -276,8 +276,22 @@ def review(
         approval.resolved_by_user_id = ctx.auth.user.id
         approval.resolution_comment = body.comment
         _review(db, ctx, approval, approval.status, body.comment, meta)
+        _decide_agent_changes(db, ctx, approval)
     db.flush()
     return approval
+
+
+def _decide_agent_changes(db: Session, ctx: WorkspaceContext, approval: Approval) -> None:
+    """An agent run's review (PR 3.5, D57): approving applies every change the run proposed, as the person
+    who started the run; rejecting applies none. Imported here to keep the approvals module independent."""
+    run_id = approval.payload.get("agent_run_id") if approval.kind == "ai_output" else None
+    if not run_id:
+        return
+    from booski_core.modules.tools.apply import decide_run_changes
+
+    decide_run_changes(
+        db, uuid.UUID(str(run_id)), approved=approval.status == "approved", decided_by=ctx.auth.user.id
+    )
 
 
 def resubmit(
@@ -312,6 +326,7 @@ def cancel(
     approval.resolved_by_user_id = ctx.auth.user.id
     approval.resolution_comment = comment
     _review(db, ctx, approval, "cancelled", comment, meta)
+    _decide_agent_changes(db, ctx, approval)  # a cancelled review applies nothing
     db.flush()
     return approval
 

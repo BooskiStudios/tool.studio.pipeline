@@ -15,12 +15,14 @@ from booski_core.core.errors import ProblemError
 from booski_core.core.pagination import SortKey, paginate
 from booski_core.core.request_meta import RequestMeta, utcnow
 from booski_core.modules.activity.service import record_workspace_event
-from booski_core.modules.agents.models import Agent, AgentRun, AgentRunEvent
+from booski_core.modules.agents.models import Agent, AgentRun, AgentRunChange, AgentRunEvent, AgentToolCall
 from booski_core.modules.agents.orchestrator import add_event
 from booski_core.modules.agents.schemas import AgentCreate, AgentUpdate, RunCreate, RunOut
 from booski_core.modules.ai.models import AiTask
 from booski_core.modules.departments.service import get_optional_department
 from booski_core.modules.tasks.models import Task
+from booski_core.modules.tools.apply import discard_run_changes
+from booski_core.modules.tools.registry import TOOLS
 
 AGENT_NOT_FOUND = "Agent not found."
 RUN_NOT_FOUND = "Agent run not found."
@@ -58,6 +60,11 @@ def _check_fields(db: Session, ctx: WorkspaceContext, fields: dict[str, Any], ow
             raise ProblemError(422, f"Unknown AI task: {fields['task_key']!r}.")
     if fields.get("department_id") is not None:
         get_optional_department(db, ctx, fields["department_id"])
+    if fields.get("tools"):
+        unknown = [name for name in fields["tools"] if name not in TOOLS]
+        if unknown:
+            raise ProblemError(422, f"Unknown tools: {', '.join(unknown)}.")
+        fields["tools"] = list(dict.fromkeys(fields["tools"]))
     if fields.get("delegates_to"):
         keys = list(dict.fromkeys(fields["delegates_to"]))
         if own_key in keys:
@@ -292,8 +299,20 @@ def cancel_run(db: Session, ctx: WorkspaceContext, run_id: uuid.UUID, meta: Requ
     run.finished_at = utcnow()
     run.lease_owner = None
     run.lease_expires_at = None
+    discard_run_changes(db, run.id)  # a cancelled run's proposals can never be applied
     _changed(db, ctx, run, meta, "cancelled", {})
     return run
+
+
+def list_tool_calls(db: Session, run: AgentRun) -> list[AgentToolCall]:
+    query = select(AgentToolCall).where(AgentToolCall.run_id == run.id).order_by(AgentToolCall.created_at)
+    return list(db.scalars(query))
+
+
+def list_changes(db: Session, run: AgentRun) -> list[AgentRunChange]:
+    return list(
+        db.scalars(select(AgentRunChange).where(AgentRunChange.run_id == run.id).order_by(AgentRunChange.seq))
+    )
 
 
 def redirect_run(
