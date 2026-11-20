@@ -2,7 +2,7 @@
 
 > **What this document is:** the actual state of the project as last verified. Update it whenever the real state changes (a merge, a new branch, CI results, a decision) in the same branch as the change.
 >
-> **Last verified:** 20 November 2026, while building PR3.5 on branch `phase-3/pr3.5-tools-execution` (after PR #15 was merged).
+> **Last verified:** 20 November 2026, after PR3.5 was merged (PR #16), while preparing the follow-up status update on branch `phase-3/pr3.5-status-complete`.
 >
 > The Git, PR and CI facts below are **results of that verification, not guarantees about the present**. Every new session must re-check them before relying on them:
 > - `git status`, `git branch -a`, `git log origin/main -5`;
@@ -13,13 +13,13 @@
 ## Where we are
 
 - **Phase:** Phase 3 — AI Core & Workforce is in progress.
-- **Current approved milestone:** **PR3.5 — Tools, Permissions & Execution**, approved 20 November 2026 (D54).
-  - **Status: Awaiting review.** Built and tested locally on `phase-3/pr3.5-tools-execution`; at last verification it was not pushed and no PR was open.
-  - What it adds: agents use tools inside their steps (eight read tools; three propose tools for documents, tasks and decisions). Proposed changes are applied only when a person approves the run's review, all or nothing. Every tool call is permission-checked as the starter, limited and logged. Backend only.
-- **Last completed milestone:** **PR3.4 — Agent Framework & Orchestration**. Merged into `main` through PR #14 (merge commit `93a860a`); CI on `main` passed.
+- **No milestone is currently approved.**
+- **Last completed milestone:** **PR3.5 — Tools, Permissions & Execution**. Merged into `main` through PR #16 (merge commit `65e0899`); CI on `main` passed.
+  - What it added: agents use tools inside their steps (eight read tools; three propose tools for documents, tasks and decisions). Proposed changes are applied only when a person approves the run's review, all or nothing. Every tool call is permission-checked as the starter, limited and logged. Backend only.
+- **Before that:** **PR3.4 — Agent Framework & Orchestration**. Merged into `main` through PR #14 (merge commit `93a860a`); CI on `main` passed.
   - What it added: per-workspace agents (Producer, Technical Director, Game Designer, QA Lead), agent runs executed by `booski agent-worker` (plan, delegated steps, final deliverable, review approval), human control and crash recovery. Developers may now use AI (D50). Backend only; no tools.
 - **Before that:** **PR3.3 — Persistent AI Memory & Knowledge** (PR #12, `39ae4ab`): memory entries, permission-aware search, context assembly. **PR3.2 — AI Core Foundation** (PR #10, `1bad661`): the AI gateway, the Anthropic provider, task-based routing with prices, usage and cost tracking, workspace AI settings. No live call to Anthropic has been made yet: the server has no key configured (`booski ai check` proves a key once one is added, D32).
-- **Next milestone:** **PR3.6 — Booski Local Worker**. **Status: Planned.** Not approved, not started.
+- **Next milestone:** **PR3.6 — Booski Local Worker**. **Status: Planned.** Not approved, not started. It may start only when the human explicitly approves it, after its plan and acceptance criteria are agreed.
 - **What exists today:** a working, persistent, multi-user studio application (Booski Core plus the React interface). It is the **foundation for the future Booski Control Plane**, not the completed Control Plane architecture described in [ARCHITECTURE.md](ARCHITECTURE.md). It stores accounts, workspaces, roles, departments, projects, milestones, tasks, documents, decisions, approvals and activity. The repository also holds the project documentation (`CLAUDE.md` and `docs/`), which is the source of truth for the plan and process.
 - **AI:** the AI Core foundation (providers, routing, gateway, usage and cost, workspace settings; PR3.2) and memory, search and context assembly (PR3.3) are built and merged. They are backend-only: no web-app feature uses them yet.
 - **What does not exist:**
@@ -41,6 +41,7 @@
 | **PR3.2** — AI Core Foundation | `c90b418` | PR #10, merge commit `1bad661` (14 Nov 2026; merge commit approved for this PR, D39) | PR runs 43642841055 and 43642849992 ✅; `main` run 43643259648 ✅ (all four jobs) |
 | **PR3.3** — Persistent AI Memory & Knowledge | `87ea2cb` | PR #12, merge commit `39ae4ab` (14 Nov 2026; merge commit approved for this PR, D44) | PR runs 43649601040 and 43649605521 ✅; `main` run 43650005302 ✅ (all four jobs) |
 | **PR3.4** — Agent Framework & Orchestration | `fedb80c` | PR #14, merge commit `93a860a` (15 Nov 2026; merge commit approved for this PR, D53) | PR runs 43747356816 and 43747362677 ✅; `main` run 43747844740 ✅ (all four jobs) |
+| **PR3.5** — Tools, Permissions & Execution | `180fe47` | PR #16, merge commit `65e0899` (20 Nov 2026; merge commit approved for this PR, D60) | PR runs 44805273650 and 44805282433 ✅; `main` run 44806146931 ✅ (all four jobs) |
 
 All PR2.x merges took place on 14 November 2026. Branch-level CI runs are listed in [ROADMAP.md](ROADMAP.md#phase-2--platform-foundations--complete).
 
@@ -54,13 +55,13 @@ All PR2.x merges took place on 14 November 2026. Branch-level CI runs are listed
 
 These were true when checked. Re-check before relying on them.
 
-- **`main`:** `45ca3df` "Merge pull request #15 …" (the PR3.4 status update), the GitHub default branch.
-- **CI on `main` at `45ca3df`:** run 44789150559 passed:
+- **`main`:** `65e0899` "Merge pull request #16 …" (PR3.5), the GitHub default branch.
+- **CI on `main` at `65e0899`:** run 44806146931 passed:
   - frontend lint, types, tests and build;
   - backend lint, types and tests (real PostgreSQL, PostgreSQL 18 client tools installed);
   - end-to-end (browser + API + PostgreSQL);
   - container smoke test.
-- **Pull requests:** PRs #1–#15 were merged. None open.
+- **Pull requests:** PRs #1–#16 were merged. This status update is a follow-up docs-only PR from `phase-3/pr3.5-status-complete`.
 - **Branches:**
   - `main`;
   - `phase-3/pr3.0-booski-blueprint`, merged through PR #6, still present on GitHub and locally;
@@ -73,11 +74,12 @@ These were true when checked. Re-check before relying on them.
   - `phase-3/pr3.3-status-complete`, merged through PR #13, still present on GitHub and locally;
   - `phase-3/pr3.4-agent-framework`, merged through PR #14, still present on GitHub and locally;
   - `phase-3/pr3.4-status-complete`, merged through PR #15, still present on GitHub and locally;
-  - `phase-3/pr3.5-tools-execution`, created from `45ca3df`; local only, holding PR3.5;
+  - `phase-3/pr3.5-tools-execution`, merged through PR #16, still present on GitHub and locally;
+  - `phase-3/pr3.5-status-complete`, this follow-up status update;
   - five merged `phase-2/*` branches, still present on GitHub and locally (PROP-2).
 - **Branch protection on `main`:** **on** since 14 November 2026 (D25): the four CI jobs are required, force-pushes and deletion are blocked, and the rules apply to administrators.
-- **Test suites on the PR3.5 branch (run locally, 20 November 2026):**
-  - 891 backend tests, all passing (854 before PR3.5);
+- **Test suites at `65e0899`:**
+  - 891 backend tests (854 before PR3.5), passing locally and in CI;
   - 51 frontend unit tests, passing locally and in CI;
   - 14 end-to-end journeys, passing in CI (local runs timed out on page loads under heavy machine load on 14 November);
   - the container smoke test in CI.
@@ -86,7 +88,7 @@ These were true when checked. Re-check before relying on them.
 
 ## Outstanding reviews
 
-- **PR3.5:** built, tested locally and committed on `phase-3/pr3.5-tools-execution`; awaiting the human's review. No push, PR or merge without explicit approval.
+- None. This status update is the docs-only follow-up the human approved with the PR3.5 merge (D60); it is merged with a merge commit once its CI passes.
 
 ## Blockers
 
@@ -116,7 +118,7 @@ These were true when checked. Re-check before relying on them.
 
 ## Next recommended action
 
-1. The human reviews PR3.5. If approved, and only with explicit approval for each step: push, open a PR, wait for CI, merge using the approved strategy, then mark PR3.5 **Complete** in a follow-up PR.
+1. Confirm that CI on `main` passed after this status update was merged (`gh run list --branch main --limit 1`).
 2. **Live key test, parked:** once the human adds Anthropic credit, run `booski ai check` once (a fraction of a cent). The key is already in `backend/.env`.
 3. Optionally decide PROP-2 (the merged Phase 2 and Phase 3 branches remain).
 4. Only if the human asks: plan PR3.6 (Booski Local Worker). It starts only on explicit approval. It needs a separate security review before merge (ROADMAP). Check D15 (HTTPS long-polling with leases), D28 and D29 (Unity version per project).
